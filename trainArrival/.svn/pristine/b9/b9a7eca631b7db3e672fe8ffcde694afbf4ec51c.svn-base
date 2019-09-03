@@ -1,0 +1,57 @@
+package hansuo.trainArrival.websocket;
+
+import java.io.Serializable;
+
+public class AlarmMessage implements Serializable {
+
+	private static final long serialVersionUID = 1888016648745391585L;
+
+	private int alarmType;
+
+	private String message;
+
+	private int id;
+
+	public AlarmMessage(int alarmType, String message, int id) {
+		this.alarmType = alarmType;
+		this.message = message;
+		this.id = id;
+	}
+
+	public String genMessage() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("{id:");
+		sb.append(this.id);
+		sb.append(",alarmType:");
+		sb.append(this.alarmType);
+		sb.append(",message:");
+		sb.append("\"" + this.message + "\"");
+		sb.append("}");
+		return sb.toString();
+	}
+
+	public int getAlarmType() {
+		return alarmType;
+	}
+
+	public void setAlarmType(int alarmType) {
+		this.alarmType = alarmType;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+}

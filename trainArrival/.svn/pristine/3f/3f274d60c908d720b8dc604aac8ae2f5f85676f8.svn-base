@@ -1,0 +1,197 @@
+package hansuo.trainArrival.common;
+
+import java.lang.reflect.Method;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
+import hansuo.trainArrival.entity.ScheduleJob;
+
+public class ScheduleJobCache {
+
+	public static final ConcurrentHashMap<Integer, JobInfo> JOB_CACHE_MAP = new ConcurrentHashMap<>();
+
+	public static final int STATUS_NEW = 0;
+
+	public static final int STATUS_DOING = 1;
+
+	public static final int STATUS_TIMEOUT = 2;
+
+	public static final int STATUS_COMPLETE = 3;
+
+	public static JobInfo get(Integer id) {
+		return JOB_CACHE_MAP.get(id);
+	}
+
+	public static int getTimeoutJob() {
+		int count = 0;
+		for (Entry<Integer, JobInfo> entry : JOB_CACHE_MAP.entrySet()) {
+			JobInfo job = entry.getValue();
+			if (job.getStatus() == STATUS_TIMEOUT) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	public static void put(ScheduleJob job, int status) {
+		if (job == null || job.getId() == null) {
+			return;
+		}
+		JobInfo jobInfo = new JobInfo();
+		jobInfo.setId(job.getId());
+		jobInfo.setChehaoStatus(job.getChehaoStatus());
+		jobInfo.setFangliuStatus(job.getFangliuStatus());
+		jobInfo.setHuojianStatus(job.getHuojianStatus());
+		jobInfo.setLiejianStatus(job.getLiejianStatus());
+		jobInfo.setLieweiStatus(job.getLieweiStatus());
+		jobInfo.setStatus(status);
+		JOB_CACHE_MAP.put(job.getId(), jobInfo);
+	}
+
+	public static JobInfo remove(int id) {
+		return JOB_CACHE_MAP.remove(id);
+	}
+
+	public static void updateStatus(ScheduleJob job, Integer status) {
+		JobInfo jobInfo = JOB_CACHE_MAP.get(job.getId());
+		if (jobInfo == null) {
+			return;
+		}
+		if (job.getChehaoStatus() != null) {
+			jobInfo.setChehaoStatus(job.getChehaoStatus());
+		}
+		if (job.getLiejianStatus() != null) {
+			jobInfo.setLiejianStatus(job.getLiejianStatus());
+		}
+		if (job.getLieweiStatus() != null) {
+			jobInfo.setLieweiStatus(job.getLieweiStatus());
+		}
+		if (job.getFangliuStatus() != null) {
+			jobInfo.setFangliuStatus(job.getFangliuStatus());
+		}
+		if (job.getHuojianStatus() != null) {
+			jobInfo.setHuojianStatus(job.getHuojianStatus());
+		}
+		if (null == status) {
+			// 检查任务是否都已接收
+			// jobInfo.setStatus(status);
+		}
+	}
+
+	/**
+	 * 修改状态
+	 * 
+	 * @param id         作业id
+	 * @param status     作业状态
+	 * @param statusName 作业需要修改的对应状态名车号，列尾，货检等等）
+	 */
+	public static void updateStatus(int id, int status, String statusName) {
+		JobInfo job = JOB_CACHE_MAP.get(id);
+		if (job == null) {
+			return;
+		}
+		Class<?> jobClazz = JobInfo.class;
+		Method method = null;
+		try {
+			method = jobClazz.getDeclaredMethod(statusName, Integer.class);
+			method.invoke(job, status);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (checkStatusComplete(job)) {
+			// 如果作业状态全部完成，将该作业从MAP中移除
+			remove(id);
+		}
+	}
+
+	private static boolean checkStatusComplete(JobInfo job) {
+		if (job.getChehaoStatus() == 2 && job.getFangliuStatus() == 2 && job.getHuojianStatus() == 2
+				&& job.getHuojianStatus() == 2 && job.getLiejianStatus() == 2 && job.getLieweiStatus() == 2) {
+			return true;
+		}
+		return false;
+	}
+
+	static class JobInfo {
+		private int id;
+		// 车次
+		private String trainNo;
+
+		private Integer status;
+
+		private Integer chehaoStatus;
+
+		private Integer liejianStatus;
+
+		private Integer fangliuStatus;
+
+		private Integer lieweiStatus;
+
+		private Integer huojianStatus;
+
+		public int getId() {
+			return id;
+		}
+
+		public void setId(int id) {
+			this.id = id;
+		}
+
+		public String getTrainNo() {
+			return trainNo;
+		}
+
+		public void setTrainNo(String trainNo) {
+			this.trainNo = trainNo;
+		}
+
+		public Integer getChehaoStatus() {
+			return chehaoStatus;
+		}
+
+		public void setChehaoStatus(Integer chehaoStatus) {
+			this.chehaoStatus = chehaoStatus;
+		}
+
+		public Integer getLiejianStatus() {
+			return liejianStatus;
+		}
+
+		public void setLiejianStatus(Integer liejianStatus) {
+			this.liejianStatus = liejianStatus;
+		}
+
+		public Integer getFangliuStatus() {
+			return fangliuStatus;
+		}
+
+		public void setFangliuStatus(Integer fangliuStatus) {
+			this.fangliuStatus = fangliuStatus;
+		}
+
+		public Integer getLieweiStatus() {
+			return lieweiStatus;
+		}
+
+		public void setLieweiStatus(Integer lieweiStatus) {
+			this.lieweiStatus = lieweiStatus;
+		}
+
+		public Integer getHuojianStatus() {
+			return huojianStatus;
+		}
+
+		public void setHuojianStatus(Integer huojianStatus) {
+			this.huojianStatus = huojianStatus;
+		}
+
+		public Integer getStatus() {
+			return status;
+		}
+
+		public void setStatus(Integer status) {
+			this.status = status;
+		}
+
+	}
+}

@@ -1,0 +1,60 @@
+package hansuo.trainArrival.entity;
+
+/**
+ * 调度作业表实体类
+ * 
+ * @author seed
+ *
+ */
+public class ScheduleJobEx extends ScheduleJob {
+
+	private static final long serialVersionUID = -6640387359712628612L;
+
+	// 安全指挥中心权限代号
+	public static final int CENTRAL = 7;
+
+	/* 作业用户 */
+	private String userName;
+
+	/* 股道名称 */
+	private String trackName;
+
+	/* 车次名称 */
+	private String trainNumber;
+
+	/* 0:false; 1:true */
+	private int canModify = 1;
+
+	public int getCanModify() {
+		return canModify;
+	}
+
+	public void setCanModify(int canModify) {
+		this.canModify = canModify;
+	}
+
+	public String getTrackName() {
+		return trackName;
+	}
+
+	public void setTrackName(String trackName) {
+		this.trackName = trackName;
+	}
+
+	public String getTrainNumber() {
+		return trainNumber;
+	}
+
+	public void setTrainNumber(String trainNumber) {
+		this.trainNumber = trainNumber;
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+}

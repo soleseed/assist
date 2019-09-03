@@ -1,0 +1,436 @@
+package hansuo.trainArrival.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import cn.afterturn.easypoi.excel.annotation.Excel;
+
+/**
+ * 调度作业表实体类
+ * 
+ * @author seed
+ *
+ */
+/**
+ * @author Administrator
+ *
+ */
+/**
+ * @author Administrator
+ *
+ */
+public class ScheduleJob implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+
+	private Integer id;
+
+	/* 0出发，1到达 */
+	@Excel(name = "到达/出发", orderNum = "1", replace = { "到达_1", "出发_0" }, width = 10)
+	private Integer isArrive;
+
+	/* 股道ID,关联股道表id */
+	private Integer trackId;
+
+	/* 辆数 */
+	@Excel(name = "辆数", orderNum = "3", width = 10)
+	private Integer trainCount;
+
+	/* 车次ID,关联车次表id */
+	private Integer trainId;
+
+	/* 时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8") // 页面展示格式
+	@Excel(name = "日期", orderNum = "0", exportFormat = "yyyy-MM-dd", width = 15)
+	private Date arriveTime;
+
+	/* 通知列检作业时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	@Excel(name = "通知列检作业时分", orderNum = "6", exportFormat = "yyyy-MM-dd HH:mm:ss", width = 20)
+	private Date trainInspectTime;
+
+	/* 列检作业接收时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	private Date tStartTime;
+
+	/* 列检作业完了时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	@Excel(name = "列检作业完了时分", orderNum = "7", exportFormat = "yyyy-MM-dd HH:mm:ss", width = 20)
+	private Date tFinishTime;
+
+	/* 通知商检作业时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	@Excel(name = "通知商检作业时分", orderNum = "8", exportFormat = "yyyy-MM-dd HH:mm:ss", width = 20)
+	private Date goodsInspectTime;
+
+	/* 商检作业接收时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	private Date gStartTime;
+
+	/* 商检作业完了时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	@Excel(name = "商检作业完了时分", orderNum = "9", exportFormat = "yyyy-MM-dd HH:mm:ss", width = 20)
+	private Date gFinishTime;
+
+	/* 通知车号作业时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	@Excel(name = "通知车号作业时分", orderNum = "10", exportFormat = "yyyy-MM-dd HH:mm:ss", width = 20)
+	private Date trainNumTime;
+
+	/* 车号作业接收时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	private Date nStartTime;
+
+	/* 车号作业完了时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	private Date nFinishTime;
+
+	/* 通知防溜/撤除防溜作业时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	@Excel(name = "通知防溜作业时分", orderNum = "11", exportFormat = "yyyy-MM-dd HH:mm:ss", width = 20)
+	private Date antiRunningTime;
+
+	/* 防溜/撤除防溜作业接收时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	private Date antiStartTime;
+
+	/* 防溜/撤除防溜作业完了时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	private Date antiFinishTime;
+
+	/* 通知列尾作业时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	@Excel(name = "通知列尾作业时分", orderNum = "15", exportFormat = "yyyy-MM-dd HH:mm:ss", width = 20)
+	private Date trainTailTime;
+
+	/* 列尾作业接收时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	private Date ttStartTime;
+
+	/* 列尾作业完了时分 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 页面展示格式
+	private Date ttFinishTime;
+
+	/* 防溜位数/撤除防溜位数 */
+	@Excel(name = "防溜位数", orderNum = "12", width = 10)
+	private Integer antiRunningCount;
+
+	/* 防溜位数/撤除防溜位数 */
+	@Excel(name = "列尾设备主机号", orderNum = "13", width = 15)
+	private String deviceNo;
+
+	/* 通知防溜人员 */
+	@Excel(name = "通知防溜人员 ", orderNum = "14", width = 15)
+	private String antiRunningMan;
+
+	/* 作业状态 1-9:进行中，10已完成，0未开始 */
+	@Excel(name = "作业状态", orderNum = "5", replace = { "未开始_0", "进行中_1", "进行中_2", "进行中_3", "进行中_4", "进行中_5", "进行中_6",
+			"进行中_7", "进行中_8", "进行中_9", "已完成_10" })
+	private Integer jobStatus;
+
+	private Integer chehaoStatus;
+
+	private Integer huojianStatus;
+
+	private Integer liejianStatus;
+
+	private Integer fangliuStatus;
+
+	private Integer lieweiStatus;
+
+	// 2018/11/20新增，防溜器具编号
+	private String antiTool;
+
+	// 车次编号
+	@Excel(name = "车次", orderNum = "4", width = 15)
+	private String trainNo;
+
+	// 车次编号
+	@Excel(name = "防溜/撤溜位置", orderNum = "16", width = 15)
+	private String antiLocation;
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public Integer getIsArrive() {
+		return isArrive;
+	}
+
+	public void setIsArrive(Integer isArrive) {
+		this.isArrive = isArrive;
+	}
+
+	public Integer getTrackId() {
+		return trackId;
+	}
+
+	public void setTrackId(Integer trackId) {
+		this.trackId = trackId;
+	}
+
+	public Integer getTrainCount() {
+		return trainCount;
+	}
+
+	public void setTrainCount(Integer trainCount) {
+		this.trainCount = trainCount;
+	}
+
+	public Integer getTrainId() {
+		return trainId;
+	}
+
+	public void setTrainId(Integer trainId) {
+		this.trainId = trainId;
+	}
+
+	public Date getArriveTime() {
+		return arriveTime;
+	}
+
+	public void setArriveTime(Date arriveTime) {
+		this.arriveTime = arriveTime;
+	}
+
+	public Date getTrainInspectTime() {
+		return trainInspectTime;
+	}
+
+	public void setTrainInspectTime(Date trainInspectTime) {
+		this.trainInspectTime = trainInspectTime;
+	}
+
+	public Date gettStartTime() {
+		return tStartTime;
+	}
+
+	public void settStartTime(Date tStartTime) {
+		this.tStartTime = tStartTime;
+	}
+
+	public Date gettFinishTime() {
+		return tFinishTime;
+	}
+
+	public void settFinishTime(Date tFinishTime) {
+		this.tFinishTime = tFinishTime;
+	}
+
+	public Date getGoodsInspectTime() {
+		return goodsInspectTime;
+	}
+
+	public void setGoodsInspectTime(Date goodsInspectTime) {
+		this.goodsInspectTime = goodsInspectTime;
+	}
+
+	public Date getgStartTime() {
+		return gStartTime;
+	}
+
+	public void setgStartTime(Date gStartTime) {
+		this.gStartTime = gStartTime;
+	}
+
+	public Date getgFinishTime() {
+		return gFinishTime;
+	}
+
+	public void setgFinishTime(Date gFinishTime) {
+		this.gFinishTime = gFinishTime;
+	}
+
+	public Date getTrainNumTime() {
+		return trainNumTime;
+	}
+
+	public void setTrainNumTime(Date trainNumTime) {
+		this.trainNumTime = trainNumTime;
+	}
+
+	public Date getnStartTime() {
+		return nStartTime;
+	}
+
+	public void setnStartTime(Date nStartTime) {
+		this.nStartTime = nStartTime;
+	}
+
+	public Date getnFinishTime() {
+		return nFinishTime;
+	}
+
+	public void setnFinishTime(Date nFinishTime) {
+		this.nFinishTime = nFinishTime;
+	}
+
+	public Date getAntiRunningTime() {
+		return antiRunningTime;
+	}
+
+	public void setAntiRunningTime(Date antiRunningTime) {
+		this.antiRunningTime = antiRunningTime;
+	}
+
+	public Date getAntiStartTime() {
+		return antiStartTime;
+	}
+
+	public void setAntiStartTime(Date antiStartTime) {
+		this.antiStartTime = antiStartTime;
+	}
+
+	public Date getAntiFinishTime() {
+		return antiFinishTime;
+	}
+
+	public void setAntiFinishTime(Date antiFinishTime) {
+		this.antiFinishTime = antiFinishTime;
+	}
+
+	public Date getTrainTailTime() {
+		return trainTailTime;
+	}
+
+	public void setTrainTailTime(Date trainTailTime) {
+		this.trainTailTime = trainTailTime;
+	}
+
+	public Date getTtStartTime() {
+		return ttStartTime;
+	}
+
+	public void setTtStartTime(Date ttStartTime) {
+		this.ttStartTime = ttStartTime;
+	}
+
+	public Date getTtFinishTime() {
+		return ttFinishTime;
+	}
+
+	public void setTtFinishTime(Date ttFinishTime) {
+		this.ttFinishTime = ttFinishTime;
+	}
+
+	public Integer getAntiRunningCount() {
+		return antiRunningCount;
+	}
+
+	public void setAntiRunningCount(Integer antiRunningCount) {
+		this.antiRunningCount = antiRunningCount;
+	}
+
+	public String getAntiRunningMan() {
+		return antiRunningMan;
+	}
+
+	public void setAntiRunningMan(String antiRunningMan) {
+		this.antiRunningMan = antiRunningMan;
+	}
+
+	public Integer getJobStatus() {
+		return jobStatus;
+	}
+
+	public void setJobStatus(Integer jobStatus) {
+		this.jobStatus = jobStatus;
+	}
+
+	public Integer getChehaoStatus() {
+		return chehaoStatus;
+	}
+
+	public void setChehaoStatus(Integer chehaoStatus) {
+		this.chehaoStatus = chehaoStatus;
+	}
+
+	public Integer getHuojianStatus() {
+		return huojianStatus;
+	}
+
+	public void setHuojianStatus(Integer huojianStatus) {
+		this.huojianStatus = huojianStatus;
+	}
+
+	public Integer getLiejianStatus() {
+		return liejianStatus;
+	}
+
+	public void setLiejianStatus(Integer liejianStatus) {
+		this.liejianStatus = liejianStatus;
+	}
+
+	public Integer getFangliuStatus() {
+		return fangliuStatus;
+	}
+
+	public void setFangliuStatus(Integer fangliuStatus) {
+		this.fangliuStatus = fangliuStatus;
+	}
+
+	public Integer getLieweiStatus() {
+		return lieweiStatus;
+	}
+
+	public void setLieweiStatus(Integer lieweiStatus) {
+		this.lieweiStatus = lieweiStatus;
+	}
+
+	public String getAntiTool() {
+		return antiTool;
+	}
+
+	public void setAntiTool(String antiTool) {
+		this.antiTool = antiTool;
+	}
+
+	public String getTrainNo() {
+		return trainNo;
+	}
+
+	public void setTrainNo(String trainNo) {
+		this.trainNo = trainNo;
+	}
+
+	public String getDeviceNo() {
+		return deviceNo;
+	}
+
+	public void setDeviceNo(String deviceNo) {
+		this.deviceNo = deviceNo;
+	}
+
+	public String getAntiLocation() {
+		return antiLocation;
+	}
+
+	public void setAntiLocation(String antiLocation) {
+		this.antiLocation = antiLocation;
+	}
+
+}

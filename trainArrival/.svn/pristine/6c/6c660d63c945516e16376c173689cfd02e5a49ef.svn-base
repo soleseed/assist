@@ -1,0 +1,154 @@
+package hansuo.trainArrival.service.impl;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import hansuo.trainArrival.entity.JobAutoInfo;
+import hansuo.trainArrival.entity.JobFeedback;
+import hansuo.trainArrival.entity.ScheduleJob;
+import hansuo.trainArrival.entity.ScheduleJobEx;
+import hansuo.trainArrival.entity.Track;
+import hansuo.trainArrival.entity.Train;
+import hansuo.trainArrival.mapper.JobAutoInfoMapper;
+import hansuo.trainArrival.mapper.JobFeedbackMapper;
+import hansuo.trainArrival.mapper.ScheduleJobMapper;
+import hansuo.trainArrival.mapper.TrackMapper;
+import hansuo.trainArrival.mapper.TrainMapper;
+import hansuo.trainArrival.service.ScheduleJobService;
+import hansuo.trainArrival.thread.AlarmUtilThread;
+import hansuo.trainArrival.websocket.WebSocket;
+
+@Service
+public class ScheduleJobServiceImpl implements ScheduleJobService {
+
+	private ScheduledExecutorService es = Executors.newScheduledThreadPool(5);
+
+	@Autowired
+	private ScheduleJobMapper scheduleJobDao;
+
+	@Autowired
+	private JobFeedbackMapper jobFeedbackDao;
+
+	@Autowired
+	private JobAutoInfoMapper jobAutoInfoDao;
+
+	@Autowired
+	private TrackMapper trackDao;
+
+	@Autowired
+	private TrainMapper trainDao;
+
+	@Override
+	public List<ScheduleJobEx> searchByConditions(ScheduleJob job) {
+		return scheduleJobDao.searchByConditions(job);
+	}
+
+	@Override
+	public Map<Integer, String> getTracks(int status, int deptId) {
+		Map<Integer, String> result = new HashMap<Integer, String>();
+		List<Track> tracks = trackDao.getTracks(status, deptId);
+		tracks.stream().forEach(track -> {
+			result.put(track.getId(), track.getTrackName());
+		});
+		return result;
+	}
+
+	@Override
+	public Map<Integer, String> getTrains(int status) {
+		Map<Integer, String> result = new HashMap<Integer, String>();
+		List<Train> trains = trainDao.getTrains(status);
+		trains.stream().forEach(train -> {
+			result.put(train.getId(), train.getTrainNumber());
+		});
+		return result;
+	}
+
+	@Override
+	public int add(ScheduleJob job) {
+		job.setChehaoStatus(0);
+		job.setLiejianStatus(0);
+		job.setLieweiStatus(0);
+		job.setHuojianStatus(0);
+		job.setFangliuStatus(0);
+		int result = scheduleJobDao.insert(job);
+		es.schedule(new AlarmUtilThread(job.getId()), 30, TimeUnit.SECONDS);
+		return result;
+	}
+
+	@Override
+	public List<ScheduleJobEx> searchByPost(int postId, String userName, String statusParam) {
+		return scheduleJobDao.searchByPost(postId, userName, statusParam);
+	}
+
+	@Override
+	public int update(ScheduleJob job) {
+		// return scheduleJobDao.update(job);
+		return 0;
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public int updateStatus(ScheduleJob job, JobFeedback jobFeedback) {
+
+		job.setAntiRunningCount(jobFeedback.getAntiRunningCount());
+		job.setAntiRunningMan(jobFeedback.getAntiRunningMan());
+		job.setAntiRunningMethod(jobFeedback.getAntiRunningMethod());
+		job.setAntiTool(jobFeedback.getAntiTool());
+
+		// scheduleJobDao.updateStatus(job.getId(),
+		// job.getJobStatus());
+		scheduleJobDao.update(job);
+		ScheduleJobEx newJob = scheduleJobDao.getById(job.getId());
+		jobFeedback.setJobId(newJob.getId());
+		jobFeedback.setFeedbackTime(new Date());
+		jobFeedback.setTrackId(newJob.getTrackId());
+		jobFeedback.setTrainId(newJob.getTrainId());
+		if (checkJobComplete(newJob)) {
+			// 作业已全部完成，生成调度自动信息
+			JobAutoInfo info = new JobAutoInfo();
+			info.setJobId(newJob.getId());
+			info.setJobAutoStatus(0);
+			info.setJobAutoTime(new Date());
+			info.setJobAutoType(1);
+			jobAutoInfoDao.insert(info);
+			try {
+				WebSocket.sendInfo("assistant", "作业完毕，请进行下一步");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		jobFeedbackDao.insert(jobFeedback);
+		return 0;
+	}
+
+	@Override
+	public ScheduleJobEx getById(int id) {
+		return scheduleJobDao.getById(id);
+	}
+
+	private boolean checkJobComplete(ScheduleJob job) {
+		try {
+
+			if (job.getChehaoStatus() + job.getLiejianStatus() + job.getLieweiStatus() + job.getHuojianStatus()
+					+ job.getFangliuStatus() == 10) {
+				return true;
+			}
+		} catch (NullPointerException e) {
+			// TODO: handle exception
+			return false;
+		}
+		return false;
+	}
+
+}

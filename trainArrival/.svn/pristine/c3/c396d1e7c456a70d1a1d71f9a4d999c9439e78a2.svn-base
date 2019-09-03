@@ -1,0 +1,356 @@
+<%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath }/css/font.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath }/css/xadmin.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath }/css/layui.css">
+    <script src="${pageContext.request.contextPath }/lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="${pageContext.request.contextPath }/js/jquery.min.js"></script>
+    <script type="text/javascript" src="${pageContext.request.contextPath }/js/xadmin.js"></script>
+    <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <style type="text/css">
+    	.red{
+    		color:red !important;
+    	}
+    	.yellow{
+    		color:#DAA520 !important;
+    	}
+    	.green{
+    		color:green !important;
+    	}
+    </style>
+    
+  </head>
+  
+  <body>
+  	<input type="hidden" id="selectPostId" value=""/>
+  	<input type="hidden" id="selectDeptId" value=""/>
+    <div class="x-nav">
+      <span class="layui-breadcrumb">
+        <a href="javascript:void(0)">首页</a>
+        <a>
+          <cite>作业情况查询</cite></a>
+      </span>
+      <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);" title="刷新">
+        <i class="layui-icon" style="line-height:30px">ဂ</i></a>
+    </div>
+    <div class="x-body">
+      <div class="layui-row" align="center">
+	      <div class="layui-form-item">
+	      	<div class="layui-inline">
+			    <div class="layui-input-inline">
+	     			<input type="text" id="arriveTime" name="arriveTime" placeholder="作业日期" autocomplete="off" class="layui-input">
+			    </div>
+		    </div>
+		    <div class="layui-inline">
+	            <div class="layui-input-inline"> 
+	              	  <select id=isArrive name="isArrive" lay-search="">
+			           <option value="">请选择出站/进站</option>
+			           <option value="0">出站</option>
+			           <option value="1">进站</option>
+			          </select>
+	             </div>
+		    </div>
+		    <div class="layui-inline">
+          		<div class="layui-input-inline">
+	              	  <select id="jobStatus" name="jobStatus" lay-search="">
+			           <option value="">请选择作业状态</option>
+			           <option value="0">未开始</option>
+			           <option value="1">进行中</option>
+			           <option value="2">已完成</option>
+			          </select>
+	            </div>
+		    </div>
+		    <!-- <div class="layui-inline">
+          		<input type="text" name="status"    placeholder="状态" autocomplete="off" class="layui-input">
+		    </div> -->
+		    <div class="layui-inline">
+	          <button id="searchBtn" class="layui-btn layui-btn"  data-type="reload"><i class="layui-icon">&#xe615;</i></button>
+		    </div>
+		    <div class="layui-inline">
+	          <button id="exportBtn" class="layui-btn layui-btn">导出查询结果<i class="layui-icon">&#xe615;</i></button>
+		    </div>
+		  </div>
+      </div>
+      </div>
+      <table id="resultTable" class="layui-hide" lay-data="{id:resultTable}" lay-filter="demo">
+      </table>
+      <div id="page" class="page"></div>
+    
+    <script type="text/html" id="mytoolBar">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail" title="查看"><i class='layui-icon'>&#xe64c;</i></a>
+	<a class="layui-btn layui-btn-xs" lay-event="info" title="通知岗位"><i class='layui-icon'>&#xe667;</i></a>
+	<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="complete" title="完成任务"><i class='layui-icon'>&#x1005;</i></a>
+
+	</script>
+    <script type="text/html" id="indexTpl">
+       {{d.LAY_TABLE_INDEX+1}}
+	</script>
+	<script type="text/html" id="isArriveStr">
+    {{#  if(d.isArrive == 1){ }}
+     	进站
+    {{#  } else { }}
+                     出站
+    {{#  } }}	
+	</script>
+	<script type="text/html" id="jobStatusStr">
+	{{#  if(d.jobStatus==null || d.jobStatus == 0){ }}
+		<span class="red">未开始 </span>
+    {{#  }}}
+	{{#  if(d.jobStatus == 1){ }}
+		<span class="red">进行中 </span>
+    {{#  }}}
+    {{#  if(d.jobStatus == 2){ }}
+		<span class="green">已完成 </span>
+    {{#  }}}
+	</script>
+	<!-- chehao -->
+	<script type="text/html" id="chehaoStatusStr">
+	{{#  if(d.chehaoStatus==null || d.chehaoStatus == 0){ }}
+		<span class="red">未开始 </span>
+    {{#  }}}
+	{{#  if(d.chehaoStatus == 1){ }}
+		<span class="red">进行中 </span>
+    {{#  }}}
+    {{#  if(d.chehaoStatus == 2){ }}
+		<span class="green">已完成 </span>
+    {{#  }}}
+	</script>
+	
+	<!-- liejian -->
+	<script type="text/html" id="liejianStatusStr">
+	{{#  if(d.liejianStatus==null || d.liejianStatus == 0){ }}
+		<span class="red">未开始 </span>
+    {{#  }}}
+	{{#  if(d.liejianStatus == 1){ }}
+		<span class="red">进行中 </span>
+    {{#  }}}
+    {{#  if(d.liejianStatus == 2){ }}
+		<span class="green">已完成 </span>
+    {{#  }}}
+	</script>
+	<!-- huojian -->
+	<script type="text/html" id="huojianStatusStr">
+	{{#  if(d.huojianStatus==null || d.huojianStatus == 0){ }}
+		<span class="red">未开始 </span>
+    {{#  }}}
+	{{#  if(d.huojianStatus == 1){ }}
+		<span class="red">进行中 </span>
+    {{#  }}}
+    {{#  if(d.huojianStatus == 2){ }}
+		<span class="green">已完成 </span>
+    {{#  }}}
+	</script>
+	
+	<!-- fangliu -->
+	<script type="text/html" id="fangliuStatusStr">
+	{{#  if(d.fangliuStatus==null || d.fangliuStatus == 0){ }}
+		<span class="red">未开始 </span>
+    {{#  }}}
+	{{#  if(d.fangliuStatus == 1){ }}
+		<span class="red">进行中 </span>
+    {{#  }}}
+    {{#  if(d.fangliuStatus == 2){ }}
+		<span class="green">已完成 </span>
+    {{#  }}}
+	</script>
+	<!-- liewei -->
+	<script type="text/html" id="lieweiStatusStr">
+	{{#  if(d.lieweiStatus==null || d.lieweiStatus == 0){ }}
+		<span class="red">未开始 </span>
+    {{#  }}}
+	{{#  if(d.lieweiStatus == 1){ }}
+		<span class="red">进行中 </span>
+    {{#  }}}
+    {{#  if(d.lieweiStatus == 2){ }}
+		<span class="green">已完成 </span>
+    {{#  }}}
+	</script>
+	
+	
+    <script>
+    $(document).ready(function(){
+    	initTable();
+    	$("#exportBtn").click(exportData);
+    });
+       
+    function setTime(){
+  	  if($("#arriveTime").val() == ""){
+  		  return null;
+  	  }else{
+  		  return $("#arriveTime").val() + ' 00:00:00';
+  	  }
+    }
+    
+   	function exportData(){
+  		var param="test=test";
+   		if(setTime() != null){
+   			param = "arriveTime=" + setTime();
+   		}
+   		if($("#isArrive").val() != ""){
+   			param = param + "&isArrive=" + $("#isArrive").val();
+   		}
+   		if($("#jobStatus").val() != ""){
+	   		param = param + "&jobStatus=" + $("#jobStatus").val()
+   		}
+   		window.location.href = "${pageContext.request.contextPath }/scheduleJob/exportExcel?" + param;
+   	}
+    
+    function initTable(){
+    	layui.use(['laypage','table','laydate'], function() {
+    		
+            var laypage = layui.laypage
+            ,table = layui.table //表格
+            ,laydate = layui.laydate
+          //执行一个laydate实例
+            laydate.render({
+              elem: '#arriveTime', //指定元素
+              //type: 'date'
+			  format: 'yyyy-MM-dd'
+            });
+          //执行一个 table 实例
+            var tableIns = table.render({
+              elem: '#resultTable'
+              ,height: 500
+              ,url: '${pageContext.request.contextPath }/scheduleJob/search' //数据接口
+              ,page:{layout: ['count','prev', 'page', 'next']}
+              ,limits:[20]
+              ,limit:20
+              ,cols: [[ //表头
+            	 //{type:'numbers',title:'序号'}
+                {field: 'arriveTime', title: '日期', width:120}
+                ,{field: 'isArrive', title: '进站/出站', width:100,templet:'#isArriveStr'}
+                ,{field: 'trackName', title: '股道', width:100}
+                ,{field: 'trainCount', title: '辆数', width:100}
+                ,{field: 'trainNo', title: '车次', width:100}
+                ,{field: 'jobStatus', title: '作业状态', width:100, templet:'#jobStatusStr'}
+                
+                ,{field: 'jobStatus', title: '车号状态', width:100, templet:'#chehaoStatusStr'}
+                ,{field: 'jobStatus', title: '列检状态', width:100, templet:'#liejianStatusStr'}
+                ,{field: 'jobStatus', title: '商检状态', width:100, templet:'#huojianStatusStr'}
+                ,{field: 'jobStatus', title: '防溜/撤溜状态', width:150, templet:'#fangliuStatusStr'}
+                ,{field: 'jobStatus', title: '列尾状态', width:100, templet:'#lieweiStatusStr'}
+                
+                ,{field: 'trainInspectTime', title: '通知列检作业时分', width:150}
+                ,{field: 'tFinishTime', title: '列检作业完了时分', width:150}
+                ,{field: 'goodsInspectTime', title: '通知商检作业时分', width:150}
+                ,{field: 'gFinishTime', title: '商检作业完了时分', width:150}
+                ,{field: 'trainNumTime', title: '通知车号作业时分', width:150}
+                ,{field: 'antiRunningTime', title: '通知防溜/撤溜作业时分', width:150}
+                ,{field: 'antiLocation', title: '防溜/撤溜位置', width:150}
+                ,{field: 'antiTool', title: '防溜/撤溜器具编号', width:150}
+                ,{field: 'deviceNo', title: '列尾设备主机号', width:150}
+                ,{field: 'trainTailTime', title: '通知列尾作业时分', width:150}
+                ,{fixed: 'right', width: 150, align:'center', toolbar: '#mytoolBar'}
+              ]]
+            });
+            
+         
+          
+           var active = {
+          	      reload: function(){
+          	      //执行重载
+          	      	tableIns.reload({
+              	        page: {
+              	          curr: 1 //重新从第 1 页开始
+              	        }
+              	        ,where: {
+              	        	arriveTime:setTime(),
+              	        		//new Date($("#arriveTime").val()).format("yyyy-MM-dd hh:mm:ss"),
+              	        	isArrive:$("#isArrive").val(),
+              	        	jobStatus:$("#jobStatus").val(),
+              	        }
+          	      	});
+          	      }
+            }
+              
+              $('#searchBtn').on('click', function(){
+                  var type = $(this).data('type');
+                  active[type] ? active[type].call(this) : '';
+               });
+            
+          	//监听工具条
+            table.on('tool(demo)', function(obj){ 
+              //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+              var data = obj.data //获得当前行数据
+              ,layEvent = obj.event; //获得 lay-event 对应的值
+              if(obj.event === 'detail'){
+            	  layer.open({
+          	        type: 2,
+          	        skin: 'CLYM-style',
+          	        area: ['1200px','550px'],
+          	        title: '',
+          	        content: '${pageContext.request.contextPath }/scheduleJob/detail?id='+data.id,
+          	        success: function(layero, index){
+          	        	layer.iframeAuto(index);
+          	        }
+	          	  });
+              } else if(obj.event === 'del'){
+                layer.confirm('确认删除吗?', function(index){
+                	$.ajax({
+                        type:"post",
+                        async:false,
+                        cache:false,
+                        url:"${pageContext.request.contextPath }/user/delete",
+                        data:{"id":data.id},
+                        dataType:"json",
+                        success:function(data,status){
+	                          //刷新父窗口
+	    					  //window.parent.location.reload();
+		                      obj.del();
+		                      layer.close(index);
+                        }
+                    });
+                });
+              } else if(obj.event === 'complete'){
+            	  if(data.jobStatus === 2){
+            		  layer.alert("任务已经完成！");
+            		  return;
+            	  }
+            	  layer.confirm('确认完成任务吗?', function(index){
+                  	$.ajax({
+                          type:"post",
+                          async:false,
+                          cache:false,
+                          url:"${pageContext.request.contextPath }/scheduleJob/complete",
+                          data:{"jobId":data.id},
+                          dataType:"json",
+                          success:function(data,status){
+  	                          //刷新父窗口
+  	    					  window.location.reload();
+  		                      layer.close(index);
+                          }
+                      });
+                  });
+              }
+              else if(obj.event === 'info'){
+            	  layer.open({
+            	        type: 2,
+            	        skin: 'CLYM-style',
+            	        area: ['450px','250px'],
+            	        title: '通知岗位作业',
+            	        content: '${pageContext.request.contextPath }/scheduleJob/toInfo?jobId='+ data.id + '&trackId=' + data.trackId,
+            	        success: function(layero, index){
+            	        }
+            	  }); 
+              }
+            });
+     	})
+    }
+	
+    </script>
+  </body>
+
+</html>

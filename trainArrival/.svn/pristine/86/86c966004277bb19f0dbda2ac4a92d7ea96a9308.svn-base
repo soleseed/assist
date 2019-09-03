@@ -1,0 +1,238 @@
+package hansuo.trainArrival.controller;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+
+import hansuo.trainArrival.common.Common;
+import hansuo.trainArrival.common.ScheduleJobCache;
+import hansuo.trainArrival.entity.JobFeedback;
+import hansuo.trainArrival.entity.ScheduleJob;
+import hansuo.trainArrival.entity.ScheduleJobEx;
+import hansuo.trainArrival.entity.WebUser;
+import hansuo.trainArrival.interceptor.WebSecurityConfig;
+import hansuo.trainArrival.service.ScheduleJobService;
+import hansuo.trainArrival.websocket.AlarmMessage;
+import hansuo.trainArrival.websocket.WebSocket;
+
+@Controller
+@RequestMapping("/scheduleJob")
+public class ScheduleJobController {
+
+	@Autowired
+	private ScheduleJobService scheduleJobService;
+
+	@RequestMapping("/toSearch")
+	public String toSearch() {
+		return "scheduleJob/scheduleJob_list";
+	}
+
+	@RequestMapping("/toSearchChehao")
+	public String toSearchChehao() {
+		return "scheduleJob/scheduleJob_list_chehao";
+	}
+
+	@RequestMapping("/toSearchHuojian")
+	public String toSearchHuojian() {
+		return "scheduleJob/scheduleJob_list_huojian";
+	}
+
+	@RequestMapping("/toSearchLiejian")
+	public String toSearchLiejian() {
+		return "scheduleJob/scheduleJob_list_liejian";
+	}
+
+	@RequestMapping("/toSearchFangliu")
+	public String toSearchFangliu() {
+		return "scheduleJob/scheduleJob_list_fangliu";
+	}
+
+	@RequestMapping("/addFangliu")
+	public String addFangliu() {
+		return "scheduleJob/scheduleJob_fangliu_add";
+	}
+
+	@RequestMapping("/toSearchLiewei")
+	public String toSearchLiewei() {
+		return "scheduleJob/scheduleJob_list_liewei";
+	}
+
+	@RequestMapping("/search")
+	@ResponseBody
+	public Map<String, Object> searchJson(ScheduleJob job, Integer page) {
+		// TODO: test
+		try {
+			List<Integer> postIds = Arrays.asList(Common.POST.get("内勤助理"));
+			AlarmMessage message = new AlarmMessage(1, "有任务超时未接收", 1);
+			WebSocket.sendInfoByPost(postIds, message.genMessage());
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		Map<String, Object> result = new HashMap<String, Object>();
+		List<ScheduleJobEx> jobs = new ArrayList<ScheduleJobEx>();
+		try {
+			Page<ScheduleJobEx> pageInfo = PageHelper.startPage(page, hansuo.trainArrival.page.Page.PAGE_SIZE);
+			jobs = scheduleJobService.searchByConditions(job);
+			result.put("count", pageInfo.getTotal());
+			result.put("code", 0);
+			result.put("message", "success");
+			result.put("data", jobs);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	@RequestMapping("/exportExcel")
+	public void exportExcel(ScheduleJob job, HttpServletResponse response) {
+		try {
+			scheduleJobService.exportExcel(job, "调度作业", "调度作业", ScheduleJobEx.class, null, true, response);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@RequestMapping("/searchByPost")
+	@ResponseBody
+	public Map<String, Object> searchByPost(ScheduleJob job, Integer page, HttpSession session, String statusParam) {
+		Map<String, Object> result = new HashMap<String, Object>();
+		List<ScheduleJobEx> jobs = new ArrayList<ScheduleJobEx>();
+		try {
+			WebUser user = (WebUser) session.getAttribute(WebSecurityConfig.SESSION_KEY);
+			Page<ScheduleJobEx> pageInfo = PageHelper.startPage(page, hansuo.trainArrival.page.Page.PAGE_SIZE);
+			jobs = scheduleJobService.searchByPost(user.getPostId(), user.getUserName(), statusParam);
+			if (user.getPostId() == ScheduleJobEx.CENTRAL) {
+				jobs.stream().forEach(item -> {
+					item.setCanModify(0);
+				});
+			}
+			result.put("count", pageInfo.getTotal());
+			result.put("code", 0);
+			result.put("message", "success");
+			result.put("data", jobs);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	@RequestMapping("/searchNewJob")
+	@ResponseBody
+	public Map<String, Object> searchNewJob(ScheduleJob job, HttpSession session, String statusParam) {
+		Map<String, Object> result = new HashMap<String, Object>();
+		List<ScheduleJobEx> jobs = new ArrayList<ScheduleJobEx>();
+		try {
+			WebUser user = (WebUser) session.getAttribute(WebSecurityConfig.SESSION_KEY);
+			jobs = scheduleJobService.searchByPost(user.getPostId(), user.getUserName(), statusParam);
+			result.put("count", jobs.size());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	@RequestMapping("/toAdd")
+	public ModelAndView toAdd(HttpSession session) {
+		ModelAndView mv = new ModelAndView();
+		try {
+			WebUser user = (WebUser) session.getAttribute(WebSecurityConfig.SESSION_KEY);
+			Map<Integer, String> trackMap = scheduleJobService.getTracks(1, user.getDeptId());
+			// Map<Integer, String> trainMap = scheduleJobService.getTrains(1);
+			mv.addObject("trackMap", trackMap);
+			// mv.addObject("trainMap", trainMap);
+			mv.setViewName("scheduleJob/scheduleJob_add");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return mv;
+	}
+
+	@RequestMapping("/add")
+	@ResponseBody
+	public int add(ScheduleJob job, @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date informTime) {
+		int result = 0;
+		try {
+			// 设置工作状态为未完成
+			// job.setJobStatus(2);
+			initDate(job, informTime);
+			result = scheduleJobService.add(job);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	@RequestMapping("/detail")
+	public ModelAndView detail(int id) {
+		ModelAndView mv = new ModelAndView();
+		try {
+			// TODO:test
+			// webSocket.sendInfo("admin", "hello");
+			ScheduleJobEx bean = scheduleJobService.getById(id);
+			mv.addObject("job", bean);
+			mv.setViewName("scheduleJob/scheduleJob_detail");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return mv;
+	}
+
+	@RequestMapping("/updateStatus")
+	@ResponseBody
+	public int update(ScheduleJob job, JobFeedback jobFeedback, HttpSession session) {
+		int result = 0;
+		try {
+			WebUser user = (WebUser) session.getAttribute(WebSecurityConfig.SESSION_KEY);
+			jobFeedback.setPostId(user.getPostId());
+			// TODO:生成反馈信息
+			result = scheduleJobService.updateStatus(job, jobFeedback);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	@RequestMapping("/alarmControl")
+	@ResponseBody
+	public Map<String, Object> alarmControl(Integer id, HttpSession session) {
+		Map<String, Object> result = new HashMap<>();
+		int count = 0;
+		WebUser user = (WebUser) session.getAttribute(WebSecurityConfig.SESSION_KEY);
+		if (user.getPostId() == 1) {
+			// 内勤助理，优先检查超时未接收任务
+			count = ScheduleJobCache.getTimeoutJob();
+			// 内勤助理，任务完成提醒
+
+		}
+		result.put("count", count);
+		return result;
+	}
+
+	private void initDate(ScheduleJob job, Date informDate) {
+		// 通知列检作业时分，通知商检作业时分，通知车号作业时分，通知撤除防溜/防溜作业时分，通知列尾作业时分字段
+		job.setTrainInspectTime(informDate);
+		job.setGoodsInspectTime(informDate);
+		job.setTrainNumTime(informDate);
+		job.setAntiRunningTime(informDate);
+		job.setTrainTailTime(informDate);
+	}
+}

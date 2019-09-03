@@ -1,0 +1,148 @@
+package hansuo.trainArrival.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+public class JobFeedback implements Serializable {
+
+	private static final long serialVersionUID = -4910082749342421887L;
+
+	private Integer id;
+
+	/* 关联调度作业表id */
+	private Integer jobId;
+
+	/* 关联岗位表id */
+	private Integer postId;
+
+	private Integer trainId;
+
+	private Integer trackId;
+
+	/* 反馈时间 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	private Date feedbackTime;
+
+	/*
+	 * 反馈类型:\1列检作业接收时分，2商检作业接收时分，3车号作业接收时分，4防溜作业接收时分,5列尾作业接收时分，6列检作业反馈时分，
+	 * 7商检作业反馈时分，\n8车号作业反馈时分，9防溜作业反馈时分,10列尾作业反馈时分
+	 */
+	private Integer jobType;
+
+	/* 防溜位数/撤除防溜位数 仅防溜撤溜反馈 */
+	private Integer antiRunningCount;
+
+	/* 防溜方法 仅防溜撤溜反馈 */
+	private String antiRunningMethod;
+
+	/* 通知防溜人员 仅防溜撤溜反馈 */
+	private String antiRunningMan;
+
+	// 2018/11/20 add 防溜器具编号
+	private String antiTool;
+
+	/* 反馈状态: 0未查阅，1已查阅 */
+	private Integer feedbackStatus;
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public Integer getJobId() {
+		return jobId;
+	}
+
+	public void setJobId(Integer jobId) {
+		this.jobId = jobId;
+	}
+
+	public Date getFeedbackTime() {
+		return feedbackTime;
+	}
+
+	public void setFeedbackTime(Date feedbackTime) {
+		this.feedbackTime = feedbackTime;
+	}
+
+	public Integer getJobType() {
+		return jobType;
+	}
+
+	public void setJobType(Integer jobType) {
+		this.jobType = jobType;
+	}
+
+	public Integer getAntiRunningCount() {
+		return antiRunningCount;
+	}
+
+	public void setAntiRunningCount(Integer antiRunningCount) {
+		this.antiRunningCount = antiRunningCount;
+	}
+
+	public String getAntiRunningMethod() {
+		return antiRunningMethod;
+	}
+
+	public void setAntiRunningMethod(String antiRunningMethod) {
+		this.antiRunningMethod = antiRunningMethod;
+	}
+
+	public String getAntiRunningMan() {
+		return antiRunningMan;
+	}
+
+	public void setAntiRunningMan(String antiRunningMan) {
+		this.antiRunningMan = antiRunningMan;
+	}
+
+	public Integer getFeedbackStatus() {
+		return feedbackStatus;
+	}
+
+	public void setFeedbackStatus(Integer feedbackStatus) {
+		this.feedbackStatus = feedbackStatus;
+	}
+
+	public Integer getPostId() {
+		return postId;
+	}
+
+	public void setPostId(Integer postId) {
+		this.postId = postId;
+	}
+
+	public Integer getTrainId() {
+		return trainId;
+	}
+
+	public void setTrainId(Integer trainId) {
+		this.trainId = trainId;
+	}
+
+	public Integer getTrackId() {
+		return trackId;
+	}
+
+	public void setTrackId(Integer trackId) {
+		this.trackId = trackId;
+	}
+
+	public String getAntiTool() {
+		return antiTool;
+	}
+
+	public void setAntiTool(String antiTool) {
+		this.antiTool = antiTool;
+	}
+
+}

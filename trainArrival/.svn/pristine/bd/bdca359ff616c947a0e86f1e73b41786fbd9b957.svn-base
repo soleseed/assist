@@ -1,0 +1,41 @@
+package hansuo.trainArrival.mapper.sqlprovider;
+
+import org.apache.ibatis.annotations.Param;
+
+import hansuo.trainArrival.entity.JobFeedback;
+
+public class JobFeedbackSqlProvider extends BaseSqlProvider {
+
+	public String searchByConditions(final JobFeedback jobFeedback) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT * FROM ");
+		sql.append(" JOB_FEEDBACK A");
+		sql.append(" LEFT JOIN  B_TRAIN B");
+		sql.append(" ON A.TRAINID = B.ID ");
+		sql.append(" LEFT JOIN  B_TRACK C");
+		sql.append(" ON A.TRACKID = C.ID ");
+		sql.append(" LEFT JOIN  B_POST D");
+		sql.append(" ON A.POSTID = D.ID ");
+		sql.append(" WHERE 1=1 ");
+		// TODO:添加筛选条件
+		// 添加排序
+		sql.append(" ORDER BY A.FEEDBACKTIME DESC");
+		return sql.toString();
+	}
+
+	public String getById(@Param("id") int id) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT * FROM ");
+		sql.append(" JOB_FEEDBACK A");
+		sql.append(" LEFT JOIN  B_TRAIN B");
+		sql.append(" ON A.TRAINID = B.ID ");
+		sql.append(" LEFT JOIN  B_TRACK C");
+		sql.append(" ON A.TRACKID = C.ID ");
+		sql.append(" LEFT JOIN  B_POST D");
+		sql.append(" ON A.POSTID = D.ID ");
+		sql.append(" WHERE 1=1 ");
+		sql.append(" AND ID = #{id}");
+		return sql.toString();
+	}
+
+}

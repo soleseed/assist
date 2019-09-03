@@ -1,0 +1,150 @@
+package hansuo.trainArrival.mapper.sqlprovider;
+
+import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.ibatis.annotations.Param;
+
+import hansuo.trainArrival.entity.ScheduleJob;
+import hansuo.trainArrival.entity.ScheduleJobEx;
+
+public class ScheduleJobSqlProvider extends BaseSqlProvider {
+
+	/**
+	 * 条件查询语句 作业日期，进出站（进站/出站/全部），是否完成（未完成/已完成/全部）
+	 * 
+	 * @param webUser
+	 * @return
+	 */
+	public String searchByConditions(final ScheduleJob job) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT A.id,a.isarrive,a.trackId,a.trainCount,a.trainNo,a.arrivetime,");
+		sql.append("a.trainInspecttime,a.tstarttime,a.tfinishtime,a.goodsinspecttime,a.gstarttime,");
+		sql.append("a.gfinishtime,a.trainNumtime,a.nstarttime,a.nfinishtime,a.antirunningtime, ");
+		sql.append("a.antistarttime,a.antifinishtime,a.antirunningcount,");
+		sql.append("a.antirunningman,a.traintailtime,a.ttstarttime,a.ttfinishtime,trackname,");
+		sql.append(
+				"(A.chehaoStatus + A.huojianStatus + A.liejianStatus + A.fangliuStatus + A.lieweiStatus) as jobStatus,");
+		sql.append(" C.TRACKNAME ");
+		sql.append(" FROM SCHEDULE_JOB A ");
+		sql.append(" LEFT JOIN B_TRACK C ");
+		sql.append(" ON A.TRACKID = C.ID ");
+		sql.append(" WHERE 1=1 ");
+		if (job.getArriveTime() != null) {
+			sql.append(" and date_format(A.arriveTime, '%y-%m-%d') = date_format('");
+			sql.append(DateFormatUtils.format(job.getArriveTime(), "yyyy-MM-dd HH:mm:ss"));
+			sql.append("', '%y-%m-%d')");
+		}
+		if (job.getIsArrive() != null) {
+			sql.append(" and A.isArrive = ");
+			sql.append(job.getIsArrive());
+		}
+		// TODO:
+		Integer i;
+		if ((i = job.getJobStatus()) != null) {
+			if (i == 0 || i == 10) {
+				sql.append(
+						" and (A.chehaoStatus + A.huojianStatus + A.liejianStatus + A.fangliuStatus + A.lieweiStatus) = ");
+				sql.append(i);
+			} else {
+				sql.append(
+						" and (A.chehaoStatus + A.huojianStatus + A.liejianStatus + A.fangliuStatus + A.lieweiStatus) >0 ");
+				sql.append(
+						" and (A.chehaoStatus + A.huojianStatus + A.liejianStatus + A.fangliuStatus + A.lieweiStatus) < 10 ");
+			}
+		}
+		// 添加排序
+		sql.append(" order by A.arriveTime desc");
+		return sql.toString();
+	}
+
+	/*
+	 * SELECT * FROM schedule_job a inner join b_track b on a.trackId= b.id inner
+	 * join web_user c on b.deptId = c.deptId inner join b_train d on a.trainId =
+	 * d.id where c.postId = ?;
+	 */
+
+	public String searchByPost(@Param("postId") int postId, @Param("userName") String userName,
+			@Param("statusParam") String statusParam) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT * FROM SCHEDULE_JOB A INNER JOIN B_TRACK B ");
+		sql.append(" ON A.TRACKID= B.ID ");
+		sql.append(" INNER JOIN WEB_USER C ");
+		sql.append(" ON	B.DEPTID = C.DEPTID ");
+		sql.append(" WHERE 1=1 ");
+		sql.append(" AND A.");
+		sql.append(statusParam);
+		sql.append("!= 2");
+		// TODO:
+		if (postId != ScheduleJobEx.CENTRAL) {
+			sql.append(" AND C.POSTID = #{postId}");
+			sql.append(" AND C.USERNAME = #{userName}");
+		} else {
+			if (statusParam.indexOf("chehao") >= 0) {
+				sql.append(" AND C.POSTID = 2");
+			} else if (statusParam.indexOf("huojian") >= 0) {
+				sql.append(" AND C.POSTID = 3");
+			} else if (statusParam.indexOf("liejian") >= 0) {
+				sql.append(" AND C.POSTID = 4");
+			} else if (statusParam.indexOf("fangliu") >= 0) {
+				sql.append(" AND C.POSTID = 5");
+			} else if (statusParam.indexOf("liewei") >= 0) {
+				sql.append(" AND C.POSTID = 6");
+			}
+		}
+		// 添加排序
+		sql.append(" order by A.arriveTime desc");
+		return sql.toString();
+	}
+
+	public String searchNewByPost(@Param("postId") int postId, @Param("userName") String userName,
+			@Param("statusParam") String statusParam) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT * FROM SCHEDULE_JOB A INNER JOIN B_TRACK B ");
+		sql.append(" ON A.TRACKID= B.ID ");
+		sql.append(" INNER JOIN WEB_USER C ");
+		sql.append(" ON	B.DEPTID = C.DEPTID ");
+		sql.append(" WHERE 1=1 ");
+		sql.append(" AND A.");
+		sql.append(statusParam);
+		sql.append("= 0");
+		// TODO:
+		if (postId != ScheduleJobEx.CENTRAL) {
+			sql.append(" AND C.POSTID = #{postId}");
+			sql.append(" AND C.USERNAME = #{userName}");
+		} else {
+			if (statusParam.indexOf("chehao") >= 0) {
+				sql.append(" AND C.POSTID = 2");
+			} else if (statusParam.indexOf("huojian") >= 0) {
+				sql.append(" AND C.POSTID = 3");
+			} else if (statusParam.indexOf("liejian") >= 0) {
+				sql.append(" AND C.POSTID = 4");
+			} else if (statusParam.indexOf("fangliu") >= 0) {
+				sql.append(" AND C.POSTID = 5");
+			} else if (statusParam.indexOf("liewei") >= 0) {
+				sql.append(" AND C.POSTID = 6");
+			}
+		}
+		// 添加排序
+		sql.append(" order by A.arriveTime desc");
+		return sql.toString();
+	}
+
+	public String getById(@Param("id") int id) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT A.id,a.isarrive,a.trackId,a.trainCount,a.trainNo,a.arrivetime,");
+		sql.append("a.trainInspecttime,a.tstarttime,a.tfinishtime,a.goodsinspecttime,a.gstarttime,");
+		sql.append("a.gfinishtime,a.trainNumtime,a.nstarttime,a.nfinishtime,a.antirunningtime, ");
+		sql.append("a.antistarttime,a.antifinishtime,a.antirunningcount,");
+		sql.append("a.antirunningman,a.traintailtime,a.ttstarttime,a.ttfinishtime,trackname,");
+		sql.append("a.chehaoStatus,a.huojianStatus,a.liejianStatus,a.fangliuStatus,lieweiStatus,");
+		sql.append(
+				"(A.chehaoStatus + A.huojianStatus + A.liejianStatus + A.fangliuStatus + A.lieweiStatus) as jobStatus,");
+		sql.append(" C.TRACKNAME ");
+		sql.append(" FROM SCHEDULE_JOB A ");
+		sql.append(" LEFT JOIN B_TRACK C ");
+		sql.append(" ON A.TRACKID = C.ID ");
+		sql.append(" WHERE 1=1 ");
+		sql.append(" AND A.ID = #{id}");
+		return sql.toString();
+	}
+
+}

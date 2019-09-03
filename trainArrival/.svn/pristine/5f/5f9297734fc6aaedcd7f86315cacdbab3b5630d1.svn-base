@@ -1,0 +1,31 @@
+package hansuo.trainArrival.mapper;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.SelectProvider;
+
+import hansuo.trainArrival.entity.JobAlarm;
+import hansuo.trainArrival.entity.JobAlarmEx;
+import hansuo.trainArrival.mapper.sqlprovider.JobAlarmSqlProvider;
+
+public interface JobAlarmMapper extends BaseMapper<JobAlarm> {
+
+	@SelectProvider(type = JobAlarmSqlProvider.class, method = "searchByConditions")
+	List<JobAlarmEx> searchByConditions(JobAlarm alarm);
+
+	@SelectProvider(type = JobAlarmSqlProvider.class, method = "getById")
+	JobAlarmEx getById(@Param("id") int id);
+
+	@Delete("delete from job_alarm where jobId= #{id} and alarmType=#{jobType}")
+	int deleteByJobIdType(@Param("id") int id, @Param("jobType") int jobType);
+
+	@Delete("delete from job_alarm where jobId= #{id} ")
+	int deleteByJobId(@Param("id") int id);
+
+	@Select("select count(*) from job_alarm")
+	int getCount();
+
+}

@@ -1,0 +1,285 @@
+package hansuo.trainArrival.common;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
+import hansuo.trainArrival.entity.ScheduleJob;
+import hansuo.trainArrival.websocket.AlarmMessage;
+import hansuo.trainArrival.websocket.WebSocket;
+
+public class ScheduleJobCache {
+
+	public static final ConcurrentHashMap<Integer, JobInfo> JOB_CACHE_MAP = new ConcurrentHashMap<>();
+
+	public static final int STATUS_NEW = 0;
+
+	public static final int STATUS_DOING = 1;
+
+	public static final int STATUS_TIMEOUT = 2;
+
+	public static final int STATUS_COMPLETE = 3;
+
+	public static JobInfo get(Integer id) {
+		return JOB_CACHE_MAP.get(id);
+	}
+
+	public static int countTimeoutJob() {
+		int count = 0;
+		for (Entry<Integer, JobInfo> entry : JOB_CACHE_MAP.entrySet()) {
+			JobInfo job = entry.getValue();
+			if (job.getStatus() == STATUS_TIMEOUT) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	public static JobInfo getTimeoutJob() {
+		for (Entry<Integer, JobInfo> entry : JOB_CACHE_MAP.entrySet()) {
+			JobInfo job = entry.getValue();
+			if (job.getStatus() == STATUS_TIMEOUT) {
+				return job;
+			}
+		}
+		return null;
+	}
+
+	public static void put(ScheduleJob job, int status) {
+		if (job == null || job.getId() == null) {
+			return;
+		}
+		JobInfo jobInfo = new JobInfo();
+		jobInfo.setId(job.getId());
+		jobInfo.setChehaoStatus(job.getChehaoStatus());
+		jobInfo.setFangliuStatus(job.getFangliuStatus());
+		jobInfo.setHuojianStatus(job.getHuojianStatus());
+		jobInfo.setLiejianStatus(job.getLiejianStatus());
+		jobInfo.setLieweiStatus(job.getLieweiStatus());
+		jobInfo.setStatus(status);
+		JOB_CACHE_MAP.put(job.getId(), jobInfo);
+	}
+
+	public static JobInfo remove(int id) {
+		return JOB_CACHE_MAP.remove(id);
+	}
+
+	public static void updateStatus(ScheduleJob job, Integer status, String postName) {
+		JobInfo jobInfo = JOB_CACHE_MAP.get(job.getId());
+		if (jobInfo == null) {
+			return;
+		}
+		jobInfo.setPostName(postName);
+		jobInfo.setTrainNo(job.getTrainNo());
+		jobInfo.setInfoTime(job.getGoodsInspectTime());
+		if (job.getChehaoStatus() != null) {
+			jobInfo.setChehaoStatus(job.getChehaoStatus());
+		}
+		if (job.getLiejianStatus() != null) {
+			jobInfo.setLiejianStatus(job.getLiejianStatus());
+		}
+		if (job.getLieweiStatus() != null) {
+			jobInfo.setLieweiStatus(job.getLieweiStatus());
+		}
+		if (job.getFangliuStatus() != null) {
+			jobInfo.setFangliuStatus(job.getFangliuStatus());
+		}
+		if (job.getHuojianStatus() != null) {
+			jobInfo.setHuojianStatus(job.getHuojianStatus());
+		}
+		if (jobInfo.getFangliuStatus() != 0 && jobInfo.getHuojianStatus() != 0 && jobInfo.getLiejianStatus() != 0
+				&& jobInfo.getLieweiStatus() != 0) {
+			jobInfo.setStatus(STATUS_DOING);
+			try {
+				List<Integer> postIds = Arrays.asList(Common.POST.get("内勤助理"));
+				AlarmMessage message = new AlarmMessage(4, "作业已全部完成，可以进行下一步作业", 1);
+				WebSocket.sendInfoByPost(postIds, null, message.genMessage());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		if (checkStatusComplete(jobInfo)) {
+			// 如果作业状态全部完成，将该作业从MAP中移除
+			remove(jobInfo.getId());
+		}
+		if (null != status) {
+			// 检查任务是否都已接收
+			jobInfo.setStatus(status);
+		}
+
+	}
+
+	/**
+	 * 修改状态
+	 * 
+	 * @param id         作业id
+	 * @param status     作业状态
+	 * @param statusName 作业需要修改的对应状态名车号，列尾，货检等等）
+	 */
+	public static void updateStatus(int id, int status, String statusName) {
+		JobInfo job = JOB_CACHE_MAP.get(id);
+		if (job == null) {
+			return;
+		}
+		Class<?> jobClazz = JobInfo.class;
+		Method method = null;
+		try {
+			method = jobClazz.getDeclaredMethod(statusName, Integer.class);
+			method.invoke(job, status);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (checkStatusComplete(job)) {
+			// 如果作业状态全部完成，将该作业从MAP中移除
+			remove(id);
+		}
+	}
+
+	private static boolean checkStatusComplete(JobInfo job) {
+		if (job.getChehaoStatus() == 2 && job.getFangliuStatus() == 2 && job.getHuojianStatus() == 2
+				&& job.getHuojianStatus() == 2 && job.getLiejianStatus() == 2 && job.getLieweiStatus() == 2) {
+			return true;
+		}
+		return false;
+	}
+
+	private static boolean checkStatusComplete(ScheduleJob job) {
+		if (job.getChehaoStatus() == 2 && job.getFangliuStatus() == 2 && job.getHuojianStatus() == 2
+				&& job.getHuojianStatus() == 2 && job.getLiejianStatus() == 2 && job.getLieweiStatus() == 2) {
+			return true;
+		}
+		return false;
+	}
+
+	public static class JobInfo {
+		private int id;
+		// 车次
+		private String trainNo;
+
+		private Integer status;
+
+		private String postName;
+
+		private Date infoTime;
+
+		private Integer chehaoStatus;
+
+		private Integer liejianStatus;
+
+		private Integer fangliuStatus;
+
+		private Integer lieweiStatus;
+
+		private Integer huojianStatus;
+
+		public JobInfo() {
+			this.chehaoStatus = 0;
+			this.liejianStatus = 0;
+			this.fangliuStatus = 0;
+			this.lieweiStatus = 0;
+			this.huojianStatus = 0;
+		}
+
+		public String genMessage() {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+			String str = null;
+			if (this.infoTime != null) {
+				str += "车次:" + this.trainNo + ";岗位:" + this.postName + ";下发时间:" + sdf.format(this.infoTime);
+			}
+			StringBuilder sb = new StringBuilder();
+			sb.append("{id:");
+			sb.append(this.id);
+			sb.append(",message:");
+			sb.append("\"" + str + "\"");
+			sb.append("}");
+			return sb.toString();
+		}
+
+		public int getId() {
+			return id;
+		}
+
+		public void setId(int id) {
+			this.id = id;
+		}
+
+		public String getTrainNo() {
+			return trainNo;
+		}
+
+		public void setTrainNo(String trainNo) {
+			this.trainNo = trainNo;
+		}
+
+		public Integer getChehaoStatus() {
+			return chehaoStatus;
+		}
+
+		public void setChehaoStatus(Integer chehaoStatus) {
+			this.chehaoStatus = chehaoStatus;
+		}
+
+		public Integer getLiejianStatus() {
+			return liejianStatus;
+		}
+
+		public void setLiejianStatus(Integer liejianStatus) {
+			this.liejianStatus = liejianStatus;
+		}
+
+		public Integer getFangliuStatus() {
+			return fangliuStatus;
+		}
+
+		public void setFangliuStatus(Integer fangliuStatus) {
+			this.fangliuStatus = fangliuStatus;
+		}
+
+		public Integer getLieweiStatus() {
+			return lieweiStatus;
+		}
+
+		public void setLieweiStatus(Integer lieweiStatus) {
+			this.lieweiStatus = lieweiStatus;
+		}
+
+		public Integer getHuojianStatus() {
+			return huojianStatus;
+		}
+
+		public void setHuojianStatus(Integer huojianStatus) {
+			this.huojianStatus = huojianStatus;
+		}
+
+		public Integer getStatus() {
+			return status;
+		}
+
+		public void setStatus(Integer status) {
+			this.status = status;
+		}
+
+		public String getPostName() {
+			return postName;
+		}
+
+		public void setPostName(String postName) {
+			this.postName = postName;
+		}
+
+		public Date getInfoTime() {
+			return infoTime;
+		}
+
+		public void setInfoTime(Date infoTime) {
+			this.infoTime = infoTime;
+		}
+
+	}
+}

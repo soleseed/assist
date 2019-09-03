@@ -1,0 +1,48 @@
+@charset "utf-8";
+.x-red {
+	color: red;
+}
+
+.layui-input {
+	border-color: #5fb878;
+}
+
+.search-form-item{
+	margin-bottom:-10px;
+}
+	
+
+/* 主页版权 BEGIN*/
+.copyright {
+	text-align: center
+}
+
+.footer {
+    background-color: #e2e2e2;
+    color: #333;
+    position: fixed;
+    bottom: 5px;
+    width: 100%;
+    z-index: 999;
+}
+/* 主页版权 END*/
+
+/* 左侧菜单栏权限隐藏 */
+.nav-hide{
+	display:none !important;
+}
+
+.self-form{
+	padding-top:20px ;
+	padding-left:20px ;
+	padding-rigth:20px ;
+	padding-bottom:0px;
+}
+.self-label{
+	width:110px;
+}
+
+/* 隐藏layui表格分页limit选择 */
+.layui-laypage-limits{
+	display:none !important;
+}

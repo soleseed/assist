@@ -1,0 +1,20 @@
+package hansuo.trainArrival.mapper;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.SelectProvider;
+
+import hansuo.trainArrival.entity.JobAlarm;
+import hansuo.trainArrival.entity.JobAlarmEx;
+import hansuo.trainArrival.mapper.sqlprovider.JobAlarmSqlProvider;
+
+public interface JobAlarmMapper extends BaseMapper<JobAlarm> {
+
+	@SelectProvider(type = JobAlarmSqlProvider.class, method = "searchByConditions")
+	List<JobAlarmEx> searchByConditions(JobAlarm alarm);
+
+	@SelectProvider(type = JobAlarmSqlProvider.class, method = "getById")
+	JobAlarmEx getById(@Param("id") int id);
+
+}

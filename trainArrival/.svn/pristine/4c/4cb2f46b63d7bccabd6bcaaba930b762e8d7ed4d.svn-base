@@ -1,0 +1,96 @@
+package hansuo.trainArrival.thread;
+
+import java.io.IOException;
+import java.util.Date;
+
+import hansuo.trainArrival.entity.JobAlarm;
+import hansuo.trainArrival.entity.ScheduleJobEx;
+import hansuo.trainArrival.service.JobAlarmService;
+import hansuo.trainArrival.service.ScheduleJobService;
+import hansuo.trainArrival.utils.SpringContextUtils;
+import hansuo.trainArrival.websocket.WebSocket;
+
+public class AlarmUtilThread implements Runnable {
+
+	private int id;
+
+	public AlarmUtilThread(int id) {
+		this.id = id;
+	}
+
+	/**
+	 * 1.查看该作业是否已经被接收：如果已经被接收，则结束；如果没有被接收，则进入2; <br/>
+	 * 2.作业30S内没有被接收，产生一条作业报警信息记录；
+	 */
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		JobAlarmService alarmService = (JobAlarmService) SpringContextUtils.getBean("jobAlarmServiceImpl");
+		ScheduleJobService jobService = (ScheduleJobService) SpringContextUtils.getBean("scheduleJobServiceImpl");
+		WebSocket webSocket = (WebSocket) SpringContextUtils.getBean("webSocket");
+		ScheduleJobEx job = jobService.getById(id);
+		JobAlarm alarm = null;
+		boolean sendMessage = false;
+		try {
+			// 车号作业未被接收，产生作业报警信息
+			if (job.getChehaoStatus() == 0) {
+				alarm = new JobAlarm();
+				alarm.setJobId(id);
+				alarm.setAlarmStatus(0);
+				alarm.setAlarmTime(new Date());
+				alarm.setAlarmType(3);
+				alarmService.add(alarm);
+				sendMessage = true;
+			}
+			// 货检作业未被接收，产生作业报警信息
+			if (job.getHuojianStatus() == 0) {
+				alarm = new JobAlarm();
+				alarm.setJobId(id);
+				alarm.setAlarmStatus(0);
+				alarm.setAlarmTime(new Date());
+				alarm.setAlarmType(2);
+				alarmService.add(alarm);
+				sendMessage = true;
+			}
+			// 列检作业未被接收，产生作业报警信息
+			if (job.getLiejianStatus() == 0) {
+				alarm = new JobAlarm();
+				alarm.setJobId(id);
+				alarm.setAlarmStatus(0);
+				alarm.setAlarmTime(new Date());
+				alarm.setAlarmType(1);
+				alarmService.add(alarm);
+				sendMessage = true;
+			}
+
+			// 防溜作业未被接收，产生作业报警信息
+			if (job.getFangliuStatus() == 0) {
+				alarm = new JobAlarm();
+				alarm.setJobId(id);
+				alarm.setAlarmStatus(0);
+				alarm.setAlarmTime(new Date());
+				alarm.setAlarmType(4);
+				alarmService.add(alarm);
+				sendMessage = true;
+			}
+
+			// 列尾作业未被接收，产生作业报警信息
+			if (job.getLieweiStatus() == 0) {
+				alarm = new JobAlarm();
+				alarm.setJobId(id);
+				alarm.setAlarmStatus(0);
+				alarm.setAlarmTime(new Date());
+				alarm.setAlarmType(5);
+				alarmService.add(alarm);
+				sendMessage = true;
+			}
+			if (sendMessage) {
+				webSocket.sendInfo("assistant", "有未接收的任务");
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}

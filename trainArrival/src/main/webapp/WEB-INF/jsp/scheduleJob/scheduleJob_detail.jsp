@@ -1,0 +1,315 @@
+<%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html>
+  
+  <head>
+    <meta charset="UTF-8">
+    <title>欢迎页面-X-admin2.0</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+    <link rel="stylesheet" href="../layuiadmin/layui/css/layui.css" media="all">
+  	<link rel="stylesheet" href="../layuiadmin/style/admin.css" media="all">
+  	<link rel="stylesheet" href="../css/style.css" media="all">
+    <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+<style type="text/css">
+.one-line{
+	width:125px !important;
+}
+</style>
+  </head>
+  
+<body>
+	  <fieldset class="layui-elem-field layui-field-title">
+	    <legend>作业详情</legend>
+	  </fieldset>
+	  <hr class="layui-bg-green">
+      <div class="layui-form self-form">
+          <div class="layui-form-item">
+          	<div class="layui-inline">
+              <label for="userName" class="layui-form-label one-line">
+                  	日期
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  autocomplete="off" class="layui-input" disabled="disabled" value="<fmt:formatDate value="${job.arriveTime}" pattern="yyyy-MM-dd"/>">
+              </div>
+          </div>
+          <div class="layui-inline">
+              <label for="isArrive" class="layui-form-label one-line">
+              	进/出站
+              </label>
+              <div class="layui-input-inline">
+                  <input id="isArrive" type="text"  autocomplete="off" class="layui-input" disabled="disabled"/>
+              </div>
+            </div>
+              <!-- <div class="layui-input-inline">
+              	  <select id="isArrive" name="isArrive" disabled="disabled">
+              	  		<option value="">请选择</option>
+               			<option value="0">出站</option>
+               			<option value="1">进站</option>
+		          </select>
+              </div> -->
+           <div class="layui-inline">
+              <label for="jobStatus" class="layui-form-label one-line">
+              	作业状态
+              </label>
+              <div class="layui-input-inline">
+                  <input id="jobStatus" type="text"  autocomplete="off" class="layui-input" disabled="disabled"/>
+              </div>
+             </div>
+              <!-- <div class="layui-input-inline">
+              	  <select id="jobStatus" name="jobStatus" disabled="disabled" lay-verify="required" lay-search="">
+              	  		<option value="">请选择</option>
+               			<option value="0">未开始</option>
+               			<option value="1">进行中</option>
+               			<option value="2">进行中</option>
+               			<option value="3">进行中</option>
+               			<option value="4">进行中</option>
+               			<option value="5">进行中</option>
+               			<option value="6">进行中</option>
+               			<option value="7">进行中</option>
+               			<option value="8">进行中</option>
+               			<option value="9">进行中</option>
+               			<option value="10">已完成</option>
+		          </select>
+              </div> -->
+          </div>
+          
+          <div class="layui-form-item">
+          	<div class="layui-inline">
+              <label class="layui-form-label one-line">
+                 	 股道
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" class="layui-input" disabled="disabled" value="${job.trackName}">
+              </div>
+          </div>
+          <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                 	 辆数
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" class="layui-input" disabled="disabled" value="${job.trainCount}">
+              </div>
+           </div>
+           <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                 	 车次
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" class="layui-input" disabled="disabled" value="${job.trainNo}">
+              </div>
+          </div>
+          </div>
+          <div class="layui-form-item">
+          	 <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	通知列检作业时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text" autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.trainInspectTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+             </div>
+             <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	列检作业接收时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.tStartTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+            <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	列检作业完了时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.tFinishTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+          </div>
+          
+          <div class="layui-form-item">
+          	 <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	通知商检作业时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.goodsInspectTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+             </div>
+             <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	商检作业接收时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.gStartTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+            <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	商检作业完了时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.gFinishTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+          </div>
+          
+          <div class="layui-form-item">
+          	 <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	通知车号作业时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.trainNumTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+             </div>
+             <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	车号作业接收时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.nStartTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+            <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	车号作业完了时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.nFinishTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+          </div>
+          
+          <div class="layui-form-item">
+          	 <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	通知<span class="isArrive">防溜/撤除防溜</span>作业时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.antiRunningTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+             </div>
+             <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	<span class="isArrive">防溜/撤除防溜</span>接收时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.antiStartTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+            <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	<span class="isArrive">防溜/撤除防溜</span>完了时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.antiFinishTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+          </div>
+          
+          <div class="layui-form-item">
+          	 <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	通知列尾作业时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.trainTailTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+             </div>
+             <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	列尾作业接收时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.ttStartTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+            <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                  	列尾作业完了时分
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" disabled="disabled" class="layui-input job-date" value="<fmt:formatDate value="${job.ttFinishTime}" pattern="yyyy-MM-dd HH:mm:ss"/>">
+              </div>
+            </div>
+          </div>
+          
+         
+          <div class="layui-form-item">
+          	<div class="layui-inline">
+              <label class="layui-form-label one-line">
+                 	 <span>列尾设备主机号</span>
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required"
+                  autocomplete="off" class="layui-input" disabled="disabled" value="${job.deviceNo}">
+              </div>
+            </div>
+            <div class="layui-inline">
+              <label class="layui-form-label one-line">
+                 	 <span class="isArrive">防溜/撤除防溜</span>器具编号
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text"  lay-verify="required" autocomplete="off" class="layui-input" disabled="disabled" value="${job.antiTool}">
+              </div>
+            </div>
+          </div>
+	  </div>
+  </body>
+<script src="../../../layuiadmin/layui/layui.js"></script>
+<script>
+    
+layui.use(['form','layer'], function(){
+    /* $ = layui.jquery; */
+  var form = layui.form,
+  	  layer = layui.layer,
+  	  $ = layui.$;
+    
+  		if(${job.isArrive} ===0){
+  			$("#isArrive").val("出站");
+  			$(".isArrive").html("撤溜");
+  		}else{
+  			$("#isArrive").val("进站");
+  			$(".isArrive").html("防溜");
+  		}
+  		
+  		if(${job.jobStatus} === 0){
+   			$("#jobStatus").val("未开始");
+  		}
+  		if( ${job.jobStatus} ===1 ){
+  			$("#jobStatus").val("进行中");
+  		}
+		if( ${job.jobStatus} === 2){
+  			$("#jobStatus").val("已完成");
+  		}
+		if( ${job.jobStatus} === 3){
+  			$("#jobStatus").val("已确认");
+  		}
+    });
+</script>	
+</html>

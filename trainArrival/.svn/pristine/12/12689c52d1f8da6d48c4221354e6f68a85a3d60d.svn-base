@@ -1,0 +1,503 @@
+<%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>首页-列车到达出发辅助系统</title>
+	<meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath }/css/font.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath }/css/xadmin.css">
+    <script type="text/javascript" src="${pageContext.request.contextPath }/js/jquery.min.js"></script>
+    <script type="text/javascript" src="${pageContext.request.contextPath }/lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="${pageContext.request.contextPath }/js/xadmin.js"></script>
+	<script type="text/javascript" src="${pageContext.request.contextPath }/js/sockjs.min.js"></script>
+	
+	<script type="text/javascript">
+		<%
+		String path = request.getContextPath();
+		String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+		String wsPath = "ws://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+		%>
+	
+		var sock;
+		if  ('WebSocket' in window) {
+			sock = new WebSocket("<%=wsPath%>websocket");
+		} else if('MozWebSocket' in window) {
+		  sock = new MozWebSocket("<%=wsPath%>websocket");
+		} else {
+		  sock = new SockJS("<%=basePath%>sockjs/websocket");
+		}
+		sock.onopen = function (e) {
+			console.log(e);
+		};
+		sock.onmessage = function (e) {
+			var alarm = eval('(' + e.data + ')');
+			console.log(alarm);
+			//checkAlarm();
+			//内勤助理提醒：
+			//alarmType=1 --超时未接收报警提醒语音（报警提示不可关闭，报警循环播放，直到报警解决）：有任务超时未接收;         
+			//报警解决条件：超时未接收的作业已接收
+			//alarmType=2 --任务全部完成提醒语音（用户查看后关闭，用户未查看提醒循环播放三次）：作业已全部完成，可以进行下一步作业
+			
+			//岗位提醒：alarmType=3 --接到新任务提醒语音（报警提示不可关闭，语音循环播放，直到接受任务）：有新任务未接收
+			if(alarm.alarmType == 1){
+				//TODO:播放语音
+				tipsPop(alarm.message,0,'alarmtips');
+				play("${pageContext.request.contextPath }/audio/timeout.mp3",0);
+			}else if(alarm.alarmType == 2){
+				//TODO:播放语音
+				tipsPop(alarm.message,1,null);
+				//查看是否正在播放超时报警语音
+				if(checkPlaying()){
+				  play("${pageContext.request.contextPath }/audio/complete.mp3",3);
+				}
+			}else if(alarm.alarmType == 3){
+				//TODO:播放语音
+				tipsPop(alarm.message,0,null);
+				play("${pageContext.request.contextPath }/audio/new.mp3",0);
+			}
+		};
+		
+		
+		 
+		 
+		 function checkPlaying(){
+			 //$("#alarmAudio").attr("src",src);
+			 //console.log($("#alarmAudio"));
+			 //console.log($("#alarmAudio")[0]);
+			 //console.log($("#alarmAudio")[0].currentSrc);
+			 if($("#alarmAudio")[0].currentSrc.indexOf('timeout') !== -1){
+				 return false;
+			 }
+			 return true;
+		 }
+		 
+		 
+		
+		function checkNewJobAlarm(){
+			$.ajax({
+                type:"post",
+                async:false,
+                cache:false,
+                url:"${pageContext.request.contextPath }/scheduleJob/searchNewJob",
+                dataType:"json",
+                success:function(data,status){
+                	if(data.count != 0){
+                		//仍有新任务没接收
+                		play("${pageContext.request.contextPath }/audio/new.mp3",0);
+                		tipsPop('有新任务未接收',0,null);
+                	}
+                }
+            });
+		}
+		
+
+		//src:播放语音； count:播放次数，0为循环播放 
+		function play(src,count){
+			//说明语音提醒已关闭
+			if($("#alarmAudio").length === 0){
+				return;
+			}
+			if(null != src){
+				$("#alarmAudio").attr("src",src);
+			}
+			if(count < 0){
+				return false;
+			}else if(count == 0){
+				$("#alarmAudio")[0].play();
+				$("#alarmAudio")[0].loop = true;
+			}else{
+				$("#alarmAudio")[0].play();
+				$("#alarmAudio")[0].loop = false;
+				$("#alarmAudio")[0].addEventListener("ended",function(e){
+					//console.log(e);
+					count --;
+					if(count > 0){
+						//setTimeout(function(){$("#alarmAudio")[0].play();},0);
+						e.target.play();
+					}else{
+						e.target.pause();
+					}
+				});
+			}
+		}
+		
+		function pause(){
+			//说明语音提醒已关闭
+			if($("#alarmAudio").length === 0){
+				return;
+			}
+			$("#alarmAudio")[0].pause();
+		}
+		
+		
+	</script>
+	
+<style>
+	.tips{
+		font-size:20px;
+		color:#F00;
+		text-align:center;
+	}
+	._p{
+		font-size:20px;
+		color:#F00;
+	}
+	.copyright{
+		text-align:center
+	}
+	.footer{
+		background-color:rgba(238, 238, 238, 1);
+		color: #333;
+	}
+</style>
+</head>
+<body>
+	<%-- <audio id="alarmAudio"  hidden controls="controls">
+	  <source src="${pageContext.request.contextPath }/audio/new.mp3" type="audio/mp3" />
+	  <embed height="100" width="100" src="${pageContext.request.contextPath }/audio/song.mp3" />
+	</audio> --%>
+
+    <!-- 顶部开始 -->
+    <div class="container">
+        <div class="logo"><a href="index">列车到达出发辅助系统</a></div>
+        <div class="left_open">
+            <i title="展开左侧栏" class="iconfont">&#xe699;</i>
+        </div>
+        <ul class="layui-nav right" lay-filter="">
+          <li class="layui-nav-item">
+            <a href="javascript:;" id="userName"></a>
+           	<dl class="layui-nav-child">
+              <dd><a onclick="openAudio();">开启语音提醒</a></dd>
+              <dd><a onclick="closeAudio();">关闭语音提醒</a></dd>
+            </dl>
+          </li>
+          <li class="layui-nav-item to-index"><a href="/logout">注销</a></li>
+        </ul>
+        
+    </div>
+    <!-- 顶部结束 -->
+    <!-- 中部开始 -->
+     <!-- 左侧菜单开始 -->
+    <div class="left-nav">
+      <div id="side-nav">
+        <ul id="nav">
+        	<li id="1000" style="display:none;">
+                <a href="javascript:;">
+                    <i class="iconfont">&#xe723;</i>
+                    <cite>用户管理</cite>
+                    <i class="iconfont nav_right">&#xe697;</i>
+                </a>
+                <ul class="sub-menu">
+                	 <li id="1001" style="display:none;">
+                        <a _href="user/toSearch">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>用户查询</cite>
+                        </a>
+                    </li >
+                </ul>
+            </li>
+            <li id="2000" style="display:none;">
+                <a href="javascript:;">
+                    <i class="iconfont">&#xe723;</i>
+                    <cite>内勤作业管理</cite>
+                    <i class="iconfont nav_right">&#xe697;</i>
+                </a>
+                <ul class="sub-menu">
+                    <li id="2002" style="display:none;">
+                        <a _href="scheduleJob/toAdd">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>编辑进出站作业</cite>
+                        </a>
+                    </li>
+                	<li id="2001" style="display:none;">
+                        <a _href="scheduleJob/toSearch">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>作业情况查询</cite>
+                        </a>
+                    </li >
+                    <li id="2004" style="display:none;">
+                        <a _href="jobAlarm/toSearch">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>作业报警信息  <span style="display:none;" class="layui-badge"></span></cite>
+                        </a>
+                    </li>
+                    <li id="2003" style="display:none;">
+                        <a _href="jobFeedback/toSearch">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>通知历史信息</cite>
+                        </a>
+                    </li>
+                    <li id="2005" style="display:none;">
+                        <a _href="jobAutoInfo/toSearch">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>自动反馈信息</cite>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li id="3000" style="display:none;">
+                <a href="javascript:;">
+                    <i class="iconfont">&#xe723;</i>
+                    <cite>岗点作业</cite>
+                    <i class="iconfont nav_right">&#xe697;</i>
+                </a>
+                <ul class="sub-menu">
+                    <li id="3001" style="display:none;">
+                        <a _href="scheduleJob/toSearchChehao">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>车号</cite>
+                        </a>
+                    </li >
+                    <li id="3002" style="display:none;">
+                        <a _href="scheduleJob/toSearchHuojian">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>货检</cite>
+                        </a>
+                    </li>
+                    <li id="3003" style="display:none;">
+                        <a _href="scheduleJob/toSearchLiejian">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>列检</cite>
+                        </a>
+                    </li>
+                    <li id="3004" style="display:none;">
+                        <a _href="scheduleJob/toSearchFangliu">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>防溜</cite>
+                        </a>
+                    </li>
+                    <li id="3005" style="display:none;">
+                        <a _href="scheduleJob/toSearchLiewei">
+                            <i class="iconfont">&#xe6a7;</i>
+                            <cite>列尾</cite>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+      </div>
+    </div>
+    <!-- <div class="x-slide_left"></div> -->
+    <!-- 左侧菜单结束 -->
+    <!-- 右侧主体开始 -->
+    <div class="page-content">
+        <div class="layui-tab tab" lay-filter="xbs_tab" lay-allowclose="false">
+          <ul class="layui-tab-title">
+            <li>首页</li>
+          </ul>
+          <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <iframe id="mainFrame" src='user/toSearch' frameborder="0" scrolling="yes" class="x-iframe"></iframe>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="page-content-bg"></div>
+    <!-- 右侧主体结束 -->
+    <!-- 中部结束 -->
+    <!-- 底部开始 -->
+    <div class="footer">
+        <div class="copyright">版权所有：上海瀚所信息技术有限公司 copyright ©hansuotech</div>  
+    </div>
+    <script type="text/javascript">
+    var index;
+	var layer;
+	var alarmIndexArray = new Array();
+	
+	setInterval(getAlarmCount,10000);
+	
+	function getAlarmCount(){
+		$.ajax({
+            type:"get",
+            async:false,
+            cache:false,
+            url:"${pageContext.request.contextPath }/jobAlarm/getCount",
+            dataType:"json",
+            success:function(data,status){
+            	if(data !== 0){
+            		$(".layui-badge").css("display","inline");
+            		$(".layui-badge").html(data);
+            	}else{
+            		$(".layui-badge").css("display","none");
+            	}
+            }
+        });
+	}
+	
+	function openAudio(){
+		//$("#alarmAudio").removeAttr("disabled");
+		var str = '<audio id="alarmAudio"  hidden controls="controls">';
+			str = str + '<source src="${pageContext.request.contextPath }/audio/new.mp3" type="audio/mp3" />'; 
+		    str = str + '</audio>';
+		$("body").prepend(str);
+		//play("${pageContext.request.contextPath }/audio/timeout.mp3",0);
+		$.ajax({
+            type:"get",
+            async:false,
+            cache:false,
+            url:"${pageContext.request.contextPath }/updateAudioTrigger?on=true",
+            dataType:"json",
+            success:function(data,status){
+            	
+            }
+        });
+		//window.location.reload();
+	}
+	
+	function closeAudio(){
+		$("audio").remove();
+		$.ajax({
+            type:"get",
+            async:false,
+            cache:false,
+            url:"${pageContext.request.contextPath }/updateAudioTrigger?on=false",
+            dataType:"json",
+            success:function(data,status){
+            	
+            }
+        });
+	}
+	
+	function initAudio(){
+		$.ajax({
+            type:"post",
+            async:false,
+            cache:false,
+            url:"${pageContext.request.contextPath }/getAudioTrigger",
+            dataType:"json",
+            success:function(data,status){
+            	if(data){
+            	   openAudio();
+            	}
+            }
+        });
+	}
+	
+	function checkAlarm(){
+		$.ajax({
+            type:"post",
+            async:false,
+            cache:false,
+            url:"${pageContext.request.contextPath }/scheduleJob/alarmControl",
+            dataType:"json",
+            success:function(data,status){
+            	if(typeof(data.message) !== "undefined"){
+            		var message = eval('(' + data.message + ')');
+            		play("${pageContext.request.contextPath }/audio/timeout.mp3",0);
+            		tipsPop(message.message,0,'alarmtips');
+            	}else{
+            		alarmIndexArray.forEach(function (item, index, array) {
+            		    console.log(item, index);
+	            		layer.close(item);
+            		});
+
+            		if(!checkPlaying()){
+            			$("#alarmAudio").attr("src","${pageContext.request.contextPath }/audio/new.mp3");
+            			pause();
+            		}
+            	}
+            }
+        });
+	}
+	
+	function closeTips(){
+		//layer.close(index);
+		layer.closeAll();
+	 }
+	
+	function tipsPop(message,hasCloseBtn,id){
+		 if(id === null){
+		 //layui.use('layer', function(){
+			//	layer = layui.layer;
+				index = layer.open({
+						id: 'normal',
+						type:1,
+						title:['提示信息', 'font-size:18px;'],
+						closeBtn:hasCloseBtn, //0不显示关闭按钮
+						shade: [0],
+						area: ['300px', '200px'],
+						offset: 'lb', //右下角弹出
+						//time: 10000, //2秒后自动关闭
+						anim: 2,
+						shade: 0,
+						content:'<div class="tips" > <p class="_p"> =>=>=>=>=></p>' + message + '<p class="_p"><=<=<=<=<=</p></div>',
+						end:function(){
+							//关闭弹窗，如果仍在播放任务完成语音，则停止语音
+							if($("#alarmAudio")[0].currentSrc.indexOf('complete') !== -1 && !$("#alarmAudio")[0].paused){
+								 pause();
+							 }
+						}
+					});
+				//})
+		 }else{
+			// layui.use('layer', function(){
+				//	layer = layui.layer;
+					alarmIndex = layer.open({
+							type:1,
+							id: id,
+							title:['提示信息', 'font-size:18px;'],
+							closeBtn:hasCloseBtn, //0不显示关闭按钮
+							shade: [0],
+							area: ['300px', '200px'],
+							offset: 'rb', //右下角弹出
+							//time: 10000, //2秒后自动关闭
+							anim: 2,
+							shade: 0,
+							content:'<div class="tips" > <p class="_p"> =>=>=>=>=></p>' + message + '<p class="_p"><=<=<=<=<=</p></div>',
+							end:function(){
+								//关闭弹窗，如果仍在播放任务完成语音，则停止语音
+								if($("#alarmAudio")[0].currentSrc.indexOf('timeout') !== -1 && !$("#alarmAudio")[0].paused){
+									 pause();
+								 }
+							}
+						});
+					alarmIndexArray.push(alarmIndex);
+			//}) 
+		 }
+		 }
+	
+		layui.use('layer', function(){
+			layer = layui.layer;
+			initAudio();
+			//tipsPop('test1',0,'alarmtips');
+			//play("${pageContext.request.contextPath }/audio/timeout.mp3",0);
+			//tipsPop('test2',0,null);
+			checkNewJobAlarm();
+			checkAlarm();
+			window.onbeforeunload = function(){
+				sock.close();
+		 	}
+	
+			$.ajax({
+                type:"post",
+                async:false,
+                cache:false,
+                url:"${pageContext.request.contextPath }/user/getUserRole",
+                dataType:"json",
+                success:function(data,status){
+                	$("#userName").html(data[0].userName);
+                	var j = 9999;
+                	for(var i = 0;i<data.length;i++){
+                        var menuId = data[i].mid;
+                        var parentMenuId = data[i].parentMenuId;
+                       	$("#"+parentMenuId).show();
+                       	$("#"+menuId).show();
+                       	if(parentMenuId != 0 && i <j){
+                       		j = i;
+                       		var url = $("#"+menuId).find('a').attr("_href");
+                       		$("#mainFrame").attr("src", url);
+                       	}
+                    }
+                }
+            });
+			
+		});
+    </script>
+</body>
+</html>

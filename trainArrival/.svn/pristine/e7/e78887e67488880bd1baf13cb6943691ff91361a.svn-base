@@ -1,0 +1,305 @@
+package hansuo.trainArrival.service.impl;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import hansuo.trainArrival.common.Common;
+import hansuo.trainArrival.common.ScheduleJobCache;
+import hansuo.trainArrival.entity.AntiTool;
+import hansuo.trainArrival.entity.JobAutoInfo;
+import hansuo.trainArrival.entity.JobFeedback;
+import hansuo.trainArrival.entity.ScheduleJob;
+import hansuo.trainArrival.entity.ScheduleJobEx;
+import hansuo.trainArrival.entity.Track;
+import hansuo.trainArrival.entity.Train;
+import hansuo.trainArrival.mapper.JobAlarmMapper;
+import hansuo.trainArrival.mapper.JobAutoInfoMapper;
+import hansuo.trainArrival.mapper.JobFeedbackMapper;
+import hansuo.trainArrival.mapper.ScheduleJobMapper;
+import hansuo.trainArrival.mapper.TrackMapper;
+import hansuo.trainArrival.mapper.TrainMapper;
+import hansuo.trainArrival.service.ScheduleJobService;
+import hansuo.trainArrival.thread.AlarmUtilThread;
+import hansuo.trainArrival.utils.ExportUtils;
+import hansuo.trainArrival.websocket.AlarmMessage;
+import hansuo.trainArrival.websocket.WebSocket;
+
+@Service
+public class ScheduleJobServiceImpl implements ScheduleJobService {
+
+	private ScheduledExecutorService es = Executors.newScheduledThreadPool(5);
+
+	@Autowired
+	private ScheduleJobMapper scheduleJobDao;
+
+	@Autowired
+	private JobFeedbackMapper jobFeedbackDao;
+
+	@Autowired
+	private JobAutoInfoMapper jobAutoInfoDao;
+
+	@Autowired
+	private JobAlarmMapper jobAlarmMapper;
+
+	@Autowired
+	private TrackMapper trackDao;
+
+	@Autowired
+	private TrainMapper trainDao;
+
+	@Override
+	public List<ScheduleJobEx> searchByConditions(ScheduleJob job) {
+		return scheduleJobDao.searchByConditions(job);
+	}
+
+	@Override
+	public Map<Integer, String> getTracks(int status, int deptId) {
+		Map<Integer, String> result = new HashMap<Integer, String>();
+		List<Track> tracks = trackDao.getTracks(status, deptId);
+		tracks.stream().forEach(track -> {
+			result.put(track.getId(), track.getTrackName());
+		});
+		return result;
+	}
+
+	@Override
+	public Map<Integer, String> getTrains(int status) {
+		Map<Integer, String> result = new HashMap<Integer, String>();
+		List<Train> trains = trainDao.getTrains(status);
+		trains.stream().forEach(train -> {
+			result.put(train.getId(), train.getTrainNumber());
+		});
+		return result;
+	}
+
+	@Override
+	public int add(ScheduleJob job) {
+		//		job.setChehaoStatus(0);
+		//		job.setLiejianStatus(0);
+		//		job.setLieweiStatus(0);
+		//		job.setHuojianStatus(0);
+		//		job.setFangliuStatus(0);
+		//设置作业状态 未开始
+		job.setJobStatus(0);
+		int result = scheduleJobDao.insert(job);
+		sendMessage(job);
+		// TODO:websocket 发布新任务提醒语音,提醒岗位人员（报警提示不可关闭，语音循环播放，直到接受任务）：有新任务未接收
+
+		es.schedule(new AlarmUtilThread(job.getId()), 30, TimeUnit.SECONDS);
+		return result;
+	}
+
+	private void sendMessage(ScheduleJob job) {
+		try {
+			Track track = trackDao.getById(job.getTrackId());
+			List<Integer> postIds = new ArrayList<>();
+			if (null != job.getFangliuStatus() && job.getFangliuStatus() == 0) {
+				postIds.add(Common.POST.get("防溜"));
+			}
+			if (null != job.getChehaoStatus() && job.getChehaoStatus() == 0) {
+				postIds.add(Common.POST.get("车号"));
+			}
+			if (null != job.getHuojianStatus() && job.getHuojianStatus() == 0) {
+				postIds.add(Common.POST.get("货检"));
+			}
+			if (null != job.getLiejianStatus() && job.getLiejianStatus() == 0) {
+				postIds.add(Common.POST.get("列检"));
+			}
+			if (null != job.getLieweiStatus() && job.getLieweiStatus() == 0) {
+				postIds.add(Common.POST.get("列尾"));
+			}
+
+			AlarmMessage message = new AlarmMessage(3, "有新任务未接收", job.getId());
+			// message.setInfoTime(job.getGoodsInspectTime());
+			WebSocket.sendInfoByPost(postIds, track.getDeptId(), message.genMessage());
+			// 缓存到MAP中
+			ScheduleJobCache.put(job, ScheduleJobCache.STATUS_NEW);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public List<ScheduleJobEx> searchByPost(int postId, String userName, String statusParam) {
+		return scheduleJobDao.searchByPost(postId, userName, statusParam);
+	}
+
+	@Override
+	public int update(ScheduleJob job) {
+		// return scheduleJobDao.update(job);
+		return 0;
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public int updateStatus(ScheduleJob job, JobFeedback jobFeedback) {
+
+		job.setAntiRunningCount(jobFeedback.getAntiRunningCount());
+		job.setDeviceNo(jobFeedback.getDeviceNo());
+		job.setAntiTool(jobFeedback.getAntiTool());
+		job.setAntiLocation(jobFeedback.getAntiLocation());
+		// scheduleJobDao.updateStatus(job.getId(),
+		// job.getJobStatus());
+		setJobStatus(job);
+		scheduleJobDao.update(job);
+		// 作业任务状态变更时，删除对应的报警信息
+		jobAlarmMapper.deleteByJobId(job.getId(), jobFeedback.getJobType());
+
+		ScheduleJobEx newJob = scheduleJobDao.getById(job.getId());
+		jobFeedback.setJobId(newJob.getId());
+		jobFeedback.setFeedbackTime(new Date());
+		jobFeedback.setTrackId(newJob.getTrackId());
+		jobFeedback.setTrainId(newJob.getTrainId());
+		// 更新缓存中信息
+		ScheduleJobCache.updateStatus(job, null, null);
+		if (checkJobComplete(newJob)) {
+			// 作业已全部完成，生成调度自动信息
+			JobAutoInfo info = new JobAutoInfo();
+			info.setJobId(newJob.getId());
+			info.setJobAutoStatus(0);
+			info.setJobAutoTime(new Date());
+			info.setJobAutoType(1);
+			jobAutoInfoDao.insert(info);
+			try {
+				// TODO:Websocket 任务全部完成提醒语音（内勤查看后关闭，内勤未查看提醒循环播放三次）：作业已全部完成，可以进行下一步作业
+				List<Integer> postIds = Arrays.asList(Common.POST.get("内勤助理"), Common.POST.get("安全作业指挥中心"));
+				AlarmMessage message = new AlarmMessage(2, "作业已全部完成，可以进行下一步作业", 1);
+				// message.setInfoTime(job.getGoodsInspectTime());
+				WebSocket.sendInfoByPost(postIds, null, message.genMessage());
+				// 作业全部完成，从缓存中移除
+				ScheduleJobCache.updateStatus(job, ScheduleJobCache.STATUS_COMPLETE, null);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		jobFeedbackDao.insert(jobFeedback);
+		return 0;
+	}
+
+	private void setJobStatus(ScheduleJob job) {
+		if ((job.getChehaoStatus() != null && job.getChehaoStatus() == 1)
+				|| (job.getLieweiStatus() != null && job.getLieweiStatus() == 1)
+				|| (job.getLiejianStatus() != null && job.getLiejianStatus() == 1)
+				|| (job.getHuojianStatus() != null && job.getHuojianStatus() == 1)
+				|| (job.getFangliuStatus() != null && job.getFangliuStatus() == 1)) {
+			//说明作业状态变更为进行中
+			job.setJobStatus(1);
+			return;
+		}
+
+		ScheduleJob oldJob = scheduleJobDao.getById(job.getId());
+		//		if (oldJob.getChehaoStatus() == null || oldJob.getLieweiStatus() == null || oldJob.getLiejianStatus() == null
+		//				|| oldJob.getHuojianStatus() == null || oldJob.getFangliuStatus() == null) {
+		//			return;
+		//		}
+		try {
+			if (oldJob.getChehaoStatus() + oldJob.getLieweiStatus() + oldJob.getLiejianStatus()
+					+ oldJob.getHuojianStatus() + oldJob.getFangliuStatus() == 9) {
+				//说明此次作业状态变更为已完成
+				job.setJobStatus(2);
+			}
+		} catch (NullPointerException e) {
+			return;
+		}
+
+	}
+
+	@Override
+	public ScheduleJobEx getById(int id) {
+		return scheduleJobDao.getById(id);
+	}
+
+	private boolean checkJobComplete(ScheduleJob job) {
+		try {
+
+			if (job.getChehaoStatus() + job.getLiejianStatus() + job.getLieweiStatus() + job.getHuojianStatus()
+					+ job.getFangliuStatus() == 10) {
+				return true;
+			}
+		} catch (NullPointerException e) {
+			// TODO: handle exception
+			return false;
+		}
+		return false;
+	}
+
+	@Override
+	public void exportExcel(ScheduleJob job, String title, String sheetName, Class<?> pojoClass, String fileName,
+			boolean isCreateHeader, HttpServletResponse response) {
+		List<ScheduleJobEx> jobs = scheduleJobDao.searchByConditions(job);
+		ExportUtils.exportExcel(jobs, title, sheetName, pojoClass, fileName, isCreateHeader, response);
+	}
+
+	@Override
+	public List<ScheduleJobEx> searchNewByPost(int postId, String userName, String statusParam) {
+		// TODO Auto-generated method stub
+		return scheduleJobDao.searchNewByPost(postId, userName, statusParam);
+	}
+
+	@Override
+	public List<AntiTool> getAntiTools(int jobId, int type) {
+		return scheduleJobDao.getAntiTools(jobId, type);
+	}
+
+	@Override
+	public boolean complete(int jobId) {
+		ScheduleJob bean = new ScheduleJob();
+		bean.setChehaoStatus(2);
+		bean.setLieweiStatus(2);
+		bean.setLiejianStatus(2);
+		bean.setHuojianStatus(2);
+		bean.setFangliuStatus(2);
+
+		bean.setJobStatus(2);
+		bean.setId(jobId);
+		scheduleJobDao.update(bean);
+
+		return true;
+	}
+
+	@Override
+	public int sendInfo(ScheduleJob job) {
+		// TODO Auto-generated method stub
+
+		checkInfoTime(job);
+		scheduleJobDao.update(job);
+		sendMessage(job);
+		return 1;
+	}
+
+	private void checkInfoTime(ScheduleJob job) {
+		Date infoTime = new Date();
+		if (job.getChehaoStatus() != null) {
+			job.setTrainNumTime(infoTime);
+		}
+		if (job.getLieweiStatus() != null) {
+			job.setTrainTailTime(infoTime);
+		}
+		if (job.getHuojianStatus() != null) {
+			job.setGoodsInspectTime(infoTime);
+		}
+		if (job.getLiejianStatus() != null) {
+			job.setTrainInspectTime(infoTime);
+		}
+		if (job.getFangliuStatus() != null) {
+			job.setAntiRunningTime(infoTime);
+		}
+	}
+
+}
